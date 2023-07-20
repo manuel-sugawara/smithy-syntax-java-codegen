@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FindBugsFilter>
+    <!-- Ignore all test files. -->
+    <Match>
+        <Class name="~com.squareup.*"/>
+    </Match>
+
+    <Match>
+        <Class name="mx.sugus.codegen.JavaCodegenContext"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="mx.sugus.codegen.JavaCodegenContext"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>
