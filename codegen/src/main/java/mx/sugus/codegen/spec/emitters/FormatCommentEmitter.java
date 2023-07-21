@@ -13,7 +13,7 @@ final class FormatCommentEmitter implements CodeEmitter {
     }
 
     public static CodeEmitter create(String format, Object[] args) {
-        return new mx.sugus.codegen.spec.emitters.FormatCommentEmitter(format, args);
+        return new FormatCommentEmitter(format, args);
     }
 
     @Override

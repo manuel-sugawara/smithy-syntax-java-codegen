@@ -1,4 +1,4 @@
-package mx.sugus.codegen.spec;
+package mx.sugus.codegen.spec2;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.SymbolConstants;
-import mx.sugus.codegen.spec.emitters.CodeEmitter;
-import mx.sugus.codegen.spec.emitters.Emitters;
+import mx.sugus.codegen.spec2.emitters.CodeEmitter;
+import mx.sugus.codegen.spec2.emitters.Emitters;
 import mx.sugus.codegen.util.Sets;
 import mx.sugus.codegen.writer.CodegenWriter;
 import software.amazon.smithy.codegen.core.Symbol;

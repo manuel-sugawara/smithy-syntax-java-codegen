@@ -1,4 +1,4 @@
-package mx.sugus.codegen.spec;
+package mx.sugus.codegen.spec2;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,15 +11,18 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 import javax.lang.model.element.Modifier;
-import mx.sugus.codegen.spec.emitters.BlockCodeEmitter;
-import mx.sugus.codegen.spec.emitters.CodeEmitter;
-import mx.sugus.codegen.spec.emitters.Emitters;
+import mx.sugus.codegen.SymbolConstants;
+import mx.sugus.codegen.spec2.emitters.AbstractCodeEmitter;
+import mx.sugus.codegen.spec2.emitters.BlockCodeEmitter;
+import mx.sugus.codegen.spec2.emitters.CodeEmitter;
+import mx.sugus.codegen.spec2.emitters.Emitters;
 import mx.sugus.codegen.writer.CodegenWriter;
+import software.amazon.smithy.codegen.core.Symbol;
 
-public final class MethodSpec implements CodeEmitter {
+public final class MethodSpec extends AbstractCodeEmitter {
     private final String name;
     private final Set<Modifier> modifiers;
-    private final Object returns;
+    private final Symbol returns;
     private final List<ParameterSpec> params;
     private final List<AnnotationSpec> annotations;
     private final BlockCodeEmitter body;
@@ -50,6 +53,57 @@ public final class MethodSpec implements CodeEmitter {
 
     public boolean isConstructor() {
         return name == null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MethodSpec)) {
+            return false;
+        }
+        MethodSpec that = (MethodSpec) o;
+        return Objects.equals(name, that.name)
+               && modifiers.equals(that.modifiers)
+               && returns.equals(that.returns)
+               && params.equals(that.params)
+               && annotations.equals(that.annotations)
+               && body.equals(that.body)
+               && javadocs.equals(that.javadocs);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, modifiers, returns, params, annotations, body, javadocs);
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public Set<Modifier> modifiers() {
+        return modifiers;
+    }
+
+    public Symbol returns() {
+        return returns;
+    }
+
+    public List<ParameterSpec> params() {
+        return params;
+    }
+
+    public List<AnnotationSpec> annotations() {
+        return annotations;
+    }
+
+    public BlockCodeEmitter body() {
+        return body;
+    }
+
+    public List<CodeEmitter> javadocs() {
+        return javadocs;
     }
 
     void emit(CodegenWriter writer, TypeSpec.TypeKind kind) {
@@ -114,7 +168,7 @@ public final class MethodSpec implements CodeEmitter {
         private final List<AnnotationSpec> annotations = new ArrayList<>();
         private String name;
         private Set<Modifier> modifiers = new LinkedHashSet<>();
-        private Object returns;
+        private Symbol returns;
         private List<ParameterSpec> params = new ArrayList<>();
         private List<CodeEmitter> javadocs = new ArrayList<>();
         private Deque<BlockCodeEmitter.Builder> state = new ArrayDeque<>();
@@ -144,7 +198,7 @@ public final class MethodSpec implements CodeEmitter {
         }
 
         public Builder returns(Object returns) {
-            this.returns = returns;
+            this.returns = SymbolConstants.toSymbol(returns);
             return this;
         }
 

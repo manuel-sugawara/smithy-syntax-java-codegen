@@ -1,10 +1,11 @@
-package mx.sugus.codegen.spec.emitters;
+package mx.sugus.codegen.spec2.emitters;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import mx.sugus.codegen.writer.CodegenWriter;
 
-public final class BlockCodeEmitter implements CodeEmitter {
+public class BlockCodeEmitter extends AbstractCodeEmitter {
     private final CodeEmitter prefix;
     private final List<CodeEmitter> contents;
     private final boolean hasNext;
@@ -17,6 +18,18 @@ public final class BlockCodeEmitter implements CodeEmitter {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public CodeEmitter prefix() {
+        return prefix;
+    }
+
+    public List<CodeEmitter> contents() {
+        return contents;
+    }
+
+    public boolean hasNext() {
+        return hasNext;
     }
 
     @Override
@@ -34,7 +47,24 @@ public final class BlockCodeEmitter implements CodeEmitter {
         }
     }
 
-    public static class Builder {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BlockCodeEmitter)) {
+            return false;
+        }
+        BlockCodeEmitter that = (BlockCodeEmitter) o;
+        return hasNext == that.hasNext && prefix.equals(that.prefix) && contents.equals(that.contents);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(prefix, contents, hasNext);
+    }
+
+    public static class Builder<B extends Builder> {
         private CodeEmitter prefix;
         private List<CodeEmitter> contents = new ArrayList<>();
         private boolean hasNext = false;
@@ -42,19 +72,19 @@ public final class BlockCodeEmitter implements CodeEmitter {
         Builder() {
         }
 
-        public Builder prefix(CodeEmitter prefix) {
+        public B prefix(CodeEmitter prefix) {
             this.prefix = prefix;
-            return this;
+            return (B) this;
         }
 
-        public Builder addContent(CodeEmitter content) {
+        public B addContent(CodeEmitter content) {
             this.contents.add(content);
-            return this;
+            return (B) this;
         }
 
-        public Builder hasNext() {
+        public B hasNext() {
             this.hasNext = true;
-            return this;
+            return (B) this;
         }
 
         public BlockCodeEmitter build() {
