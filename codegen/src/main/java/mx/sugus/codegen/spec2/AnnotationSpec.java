@@ -29,7 +29,7 @@ public final class AnnotationSpec implements CodeEmitter {
         }
         if (members.size() == 1) {
             var member = members.get(0);
-            if (member.name.equals("<default>")) {
+            if ("<default>".equals(member.name)) {
                 writer.writeInline("@$T(", type);
                 member.value.emit(writer);
                 writer.writeInlineWithNoFormatting(")");

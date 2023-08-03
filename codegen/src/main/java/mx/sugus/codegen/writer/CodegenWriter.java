@@ -110,13 +110,21 @@ public class CodegenWriter extends SymbolWriter<CodegenWriter, CodeGenImportCont
 
     @Override
     public String toString() {
-        return fileHeader() +
-               "\n" +
-               packageDeclaration() +
-               "\n" +
-               getImportContainer().toString() +
-               "\n" +
-               super.toString();
+        var buf = new StringBuilder();
+        var header = fileHeader();
+        if (!header.isEmpty()) {
+            buf.append(header).append('\n');
+        }
+        var packageDeclaration = packageDeclaration();
+        if (!packageDeclaration.isEmpty()) {
+            buf.append(packageDeclaration).append('\n');
+        }
+        var imports = getImportContainer().toString();
+        if (!imports.isEmpty()) {
+            buf.append(imports).append('\n');
+        }
+        buf.append(super.toString());
+        return buf.toString();
     }
 
     int computeWrapLength() {
@@ -137,6 +145,9 @@ public class CodegenWriter extends SymbolWriter<CodegenWriter, CodeGenImportCont
     }
 
     String packageDeclaration() {
+        if (packageName.isEmpty() || packageName.startsWith("<")) {
+            return "";
+        }
         return "package " + packageName + ";\n";
     }
 

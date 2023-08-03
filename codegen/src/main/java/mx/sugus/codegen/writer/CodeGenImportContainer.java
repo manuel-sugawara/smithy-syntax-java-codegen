@@ -34,6 +34,9 @@ public class CodeGenImportContainer implements ImportContainer {
 
     @Override
     public String toString() {
+        if (imports.isEmpty()) {
+            return "";
+        }
         var buf = new StringBuilder();
         imports.forEach(dependency ->
                             buf.append("import ")

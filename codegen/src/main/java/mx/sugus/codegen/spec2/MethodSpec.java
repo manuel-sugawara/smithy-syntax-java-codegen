@@ -1,41 +1,36 @@
 package mx.sugus.codegen.spec2;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.function.Consumer;
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.SymbolConstants;
-import mx.sugus.codegen.spec2.emitters.AbstractCodeEmitter;
-import mx.sugus.codegen.spec2.emitters.BlockCodeEmitter;
+import mx.sugus.codegen.spec2.emitters.BlockCodeEmitter2;
 import mx.sugus.codegen.spec2.emitters.CodeEmitter;
 import mx.sugus.codegen.spec2.emitters.Emitters;
 import mx.sugus.codegen.writer.CodegenWriter;
 import software.amazon.smithy.codegen.core.Symbol;
 
-public final class MethodSpec extends AbstractCodeEmitter {
+public final class MethodSpec extends BlockCodeEmitter2<MethodSpec.Builder, MethodSpec> {
     private final String name;
     private final Set<Modifier> modifiers;
     private final Symbol returns;
     private final List<ParameterSpec> params;
     private final List<AnnotationSpec> annotations;
-    private final BlockCodeEmitter body;
     private List<CodeEmitter> javadocs;
 
     private MethodSpec(Builder builder) {
+        super(builder);
         this.name = builder.name;
         this.modifiers = new LinkedHashSet<>(builder.modifiers);
         this.returns = builder.returns;
         this.params = List.copyOf(builder.params);
         this.javadocs = List.copyOf(builder.javadocs);
         this.annotations = List.copyOf(builder.annotations);
-        this.body = builder.state.pop().build();
     }
 
     public static Builder constructorBuilder() {
@@ -47,8 +42,9 @@ public final class MethodSpec extends AbstractCodeEmitter {
     }
 
     @Override
-    public void emit(CodegenWriter writer) {
-        emit(name, writer, TypeSpec.TypeKind.CLASS);
+    public CodeEmitter prefix() {
+        return writer ->
+            emit(name, writer, TypeSpec.TypeKind.CLASS);
     }
 
     public boolean isConstructor() {
@@ -63,19 +59,19 @@ public final class MethodSpec extends AbstractCodeEmitter {
         if (!(o instanceof MethodSpec)) {
             return false;
         }
+        // super.equals or some such
         MethodSpec that = (MethodSpec) o;
         return Objects.equals(name, that.name)
                && modifiers.equals(that.modifiers)
                && returns.equals(that.returns)
                && params.equals(that.params)
                && annotations.equals(that.annotations)
-               && body.equals(that.body)
                && javadocs.equals(that.javadocs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, modifiers, returns, params, annotations, body, javadocs);
+        return Objects.hash(name, modifiers, returns, params, annotations, javadocs);
     }
 
     public String name() {
@@ -96,10 +92,6 @@ public final class MethodSpec extends AbstractCodeEmitter {
 
     public List<AnnotationSpec> annotations() {
         return annotations;
-    }
-
-    public BlockCodeEmitter body() {
-        return body;
     }
 
     public List<CodeEmitter> javadocs() {
@@ -134,8 +126,6 @@ public final class MethodSpec extends AbstractCodeEmitter {
         Emitters.emitJoining(writer, params, ", ", "(", ")");
         if (this.modifiers.contains(Modifier.ABSTRACT) || kind == TypeSpec.TypeKind.INTERFACE) {
             writer.write(";");
-        } else {
-            body.emit(writer);
         }
     }
 
@@ -164,22 +154,19 @@ public final class MethodSpec extends AbstractCodeEmitter {
         writer.write(" */");
     }
 
-    public static class Builder {
+    public static class Builder extends BlockCodeEmitter2.Builder<Builder, MethodSpec> {
         private final List<AnnotationSpec> annotations = new ArrayList<>();
         private String name;
         private Set<Modifier> modifiers = new LinkedHashSet<>();
         private Symbol returns;
         private List<ParameterSpec> params = new ArrayList<>();
         private List<CodeEmitter> javadocs = new ArrayList<>();
-        private Deque<BlockCodeEmitter.Builder> state = new ArrayDeque<>();
 
         Builder(String name) {
             this.name = Objects.requireNonNull(name);
-            this.state.push(BlockCodeEmitter.builder().prefix(Emitters.emptyInline()));
         }
 
         Builder() {
-            this.state.push(BlockCodeEmitter.builder().prefix(Emitters.emptyInline()));
         }
 
         public Builder addAnnotation(Object type) {
@@ -212,12 +199,6 @@ public final class MethodSpec extends AbstractCodeEmitter {
             return this;
         }
 
-        public Builder addStatement(String line) {
-            assert state.peekFirst() != null;
-            state.peekFirst().addContent(Emitters.literal(line));
-            return this;
-        }
-
         public Builder addJavadoc(String javadoc) {
             if (javadoc != null) {
                 this.javadocs.add(Emitters.literalComment(javadoc));
@@ -230,90 +211,8 @@ public final class MethodSpec extends AbstractCodeEmitter {
             return this;
         }
 
-        public Builder addStatement(String format, Object... params) {
-            assert state.peekFirst() != null;
-            state.peekFirst().addContent(Emitters.format(format, params));
-            return this;
-        }
-
-        public Builder addLabel(String format, Object... params) {
-            assert state.peekFirst() != null;
-            state.peekFirst().addContent(Emitters.formatComment(format, params));
-            return this;
-        }
-
-        public Builder startControlFlow(String content) {
-            var blockBuilder = BlockCodeEmitter.builder();
-            blockBuilder.prefix(Emitters.literalInline(content));
-            state.push(blockBuilder);
-            return this;
-        }
-
-        public Builder startControlFlow(String format, Object... args) {
-            var blockBuilder = BlockCodeEmitter.builder();
-            blockBuilder.prefix(Emitters.formatInline(format, args));
-            state.push(blockBuilder);
-            return this;
-        }
-
-        public Builder nextControlFlow(String content) {
-            var blockBuilder = BlockCodeEmitter.builder();
-            blockBuilder.prefix(Emitters.literalInline(content));
-            var previous = state.pop();
-            assert state.peek() != null;
-            state.peek().addContent(previous.hasNext().build());
-            state.push(blockBuilder);
-            return this;
-        }
-
-        public Builder nextControlFlow(String format, Object... args) {
-            if (state.size() <= 1) {
-                throw new IllegalStateException("nextControlFlow requires a previous call to startControlFlow");
-            }
-            var blockBuilder = BlockCodeEmitter.builder();
-            blockBuilder.prefix(Emitters.format(format, args));
-            var previous = state.pop();
-            state.peek().addContent(previous.hasNext().build());
-            state.push(blockBuilder);
-            return this;
-        }
-
-        public Builder addCodeEmitter(CodeEmitter emitter) {
-            assert state.peekFirst() != null;
-            state.peekFirst().addContent(emitter);
-            return this;
-        }
-
-        public Builder endControlFlow() {
-            if (state.size() <= 1) {
-                throw new IllegalStateException("nextControlFlow requires a previous call to startControlFlow");
-            }
-            var previous = state.pop();
-            state.peek().addContent(previous.build());
-            return this;
-        }
-
-        public Builder ifStatement(String condition, Consumer<Builder> body) {
-            startControlFlow("if (" + Objects.requireNonNull(condition) + ")");
-            body.accept(this);
-            endControlFlow();
-            return this;
-        }
-
-        public Builder ifStatement(String condition, Consumer<Builder> body, Consumer<Builder> elseBody) {
-            startControlFlow("if (" + Objects.requireNonNull(condition) + ")");
-            body.accept(this);
-            nextControlFlow("else");
-            elseBody.accept(this);
-            endControlFlow();
-            return this;
-        }
-
         public MethodSpec build() {
             return new MethodSpec(this);
         }
-    }
-
-    record Parameter(Object type, String name) {
     }
 }

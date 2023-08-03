@@ -8,19 +8,19 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import mx.sugus.codegen.writer.CodegenWriter;
 
+public class BlockCodeEmitter2<B extends BlockCodeEmitter2.Builder<B, T>, T extends BlockCodeEmitter2<B, T>>
+    extends AbstractCodeEmitter {
+    protected final CodeEmitter prefix;
+    protected final List<CodeEmitter> contents;
+    protected final boolean hasNext;
 
-public class BlockCodeEmitter2 extends AbstractCodeEmitter {
-    private final CodeEmitter prefix;
-    private final List<CodeEmitter> contents;
-    private final boolean hasNext;
-
-    protected BlockCodeEmitter2(Builder<?, ?> builder) {
+    protected BlockCodeEmitter2(Builder<B, T> builder) {
         this.prefix = builder.prefix;
         this.contents = List.copyOf(builder.contents);
         this.hasNext = builder.hasNext;
     }
 
-    public static Builder<?, ?> builder() {
+    public static <B extends BlockCodeEmitter2.Builder<B, T>, T extends BlockCodeEmitter2<B, T>> Builder<B, T> builder() {
         return new Builder<>();
     }
 
@@ -43,7 +43,7 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
         return prefix;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","rawtypes"})
     public static class Builder<B extends Builder<B, T>, T extends BlockCodeEmitter2> {
         protected CodeEmitter prefix;
         protected Deque<BlockCodeEmitter2.Builder<?, ?>> state = new ArrayDeque<>();
@@ -55,7 +55,7 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
             this.state.push(this);
         }
 
-        Builder() {
+        protected Builder() {
             this.prefix = LiteralInlineCodeEmitter.EMPTY;
             this.state.push(this);
         }
@@ -70,20 +70,20 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
             return (B) this;
         }
 
-        protected B addContent(CodeEmitter content) {
+        public B addStatement(CodeEmitter content) {
             contents.add(content);
             return (B) this;
         }
 
         public B addStatement(String line) {
             assert state.peekFirst() != null;
-            state.peekFirst().addContent(Emitters.literal(line));
+            state.peekFirst().addStatement(Emitters.literal(line));
             return (B) this;
         }
 
         public B addStatement(String format, Object... params) {
             assert state.peekFirst() != null;
-            state.peekFirst().addContent(Emitters.format(format, params));
+            state.peekFirst().addStatement(Emitters.format(format, params));
             return (B) this;
         }
 
@@ -106,7 +106,7 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
             blockBuilder.prefix(Emitters.literalInline(content));
             var previous = state.pop();
             assert state.peek() != null;
-            state.peek().addContent(previous.setHasNext().build());
+            state.peek().addStatement(previous.setHasNext().build());
             state.push(blockBuilder);
             return (B) this;
         }
@@ -118,7 +118,7 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
             var blockBuilder = builder();
             blockBuilder.prefix(Emitters.format(format, args));
             var previous = state.pop();
-            state.peek().addContent(previous.setHasNext().build());
+            state.peek().addStatement(previous.setHasNext().build());
             state.push(blockBuilder);
             return (B) this;
         }
@@ -129,29 +129,23 @@ public class BlockCodeEmitter2 extends AbstractCodeEmitter {
             }
             var previous = state.pop();
             assert state.peek() != null;
-            state.peek().addContent(previous.build());
+            state.peek().addStatement(previous.build());
             return (B) this;
         }
 
-        public B ifStatement(String condition, Consumer<Builder<B,T>> body) {
+        public B ifStatement(String condition, Consumer<Builder<B, T>> body) {
             startControlFlow("if (" + Objects.requireNonNull(condition) + ")");
             body.accept(this);
             endControlFlow();
             return (B) this;
         }
 
-        public B ifStatement(String condition, Consumer<Builder<B,T>> body, Consumer<Builder<B,T>> elseBody) {
+        public B ifStatement(String condition, Consumer<Builder<B, T>> body, Consumer<Builder<B, T>> elseBody) {
             startControlFlow("if (" + Objects.requireNonNull(condition) + ")");
             body.accept(this);
             nextControlFlow("else");
             elseBody.accept(this);
             endControlFlow();
-            return (B) this;
-        }
-
-        public B addCodeEmitter(CodeEmitter emitter) {
-            assert state.peekFirst() != null;
-            state.peekFirst().addContent(emitter);
             return (B) this;
         }
 

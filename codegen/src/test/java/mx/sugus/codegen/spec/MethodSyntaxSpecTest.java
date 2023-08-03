@@ -4,7 +4,7 @@ import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.writer.CodegenWriter;
 import org.junit.jupiter.api.Test;
 
-class MethodSpecTest {
+class MethodSyntaxSpecTest {
 
     @Test
     public void test1() {

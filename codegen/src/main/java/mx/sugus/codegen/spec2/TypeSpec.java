@@ -25,7 +25,6 @@ public class TypeSpec implements CodeEmitter {
     private final List<Symbol> extend;
     private final List<FieldSpec> fields;
     protected final List<EnumConstant> enumConstants;
-
     private final List<MethodSpec> methods;
 
     TypeSpec(Builder<?> builder) {
@@ -209,6 +208,22 @@ public class TypeSpec implements CodeEmitter {
         final Set<Modifier> implicitMethodModifiers;
         final Set<Modifier> implicitTypeModifiers;
         final Set<Modifier> asMemberModifiers;
+
+        public Set<Modifier> getImplicitFieldModifiers() {
+            return implicitFieldModifiers;
+        }
+
+        public Set<Modifier> getImplicitMethodModifiers() {
+            return implicitMethodModifiers;
+        }
+
+        public Set<Modifier> getImplicitTypeModifiers() {
+            return implicitTypeModifiers;
+        }
+
+        public Set<Modifier> getAsMemberModifiers() {
+            return asMemberModifiers;
+        }
 
         TypeKind(Set<Modifier> implicitFieldModifiers,
                  Set<Modifier> implicitMethodModifiers,
