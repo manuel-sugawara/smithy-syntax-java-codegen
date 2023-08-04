@@ -7,6 +7,7 @@ import mx.sugus.codegen.spec3.syntax.ClassField;
 import mx.sugus.codegen.spec3.syntax.ClassSyntax;
 import mx.sugus.codegen.spec3.syntax.FormatExpression;
 import mx.sugus.codegen.spec3.syntax.LiteralExpression;
+import mx.sugus.codegen.spec3.syntax.MethodSyntax;
 import mx.sugus.codegen.spec3.syntax.SyntaxNode;
 
 public class ClassSpec {
@@ -15,6 +16,13 @@ public class ClassSpec {
 
     ClassSpec(String name) {
         classBuilder = ClassSyntax.builder(name);
+    }
+
+    public ClassSpec addModifiers(Modifier... modifiers) {
+        for (Modifier modifier : modifiers) {
+            classBuilder.addModifier(modifier);
+        }
+        return this;
     }
 
     public ClassSpec addField(Object type, String name) {
@@ -65,5 +73,12 @@ public class ClassSpec {
         return this;
     }
 
+    public ClassSpec addMethod(MethodSyntax method) {
+        bodyBuilder.addMethod(method);
+        return this;
+    }
 
+    public ClassSyntax build() {
+        return classBuilder.body(bodyBuilder.build()).build();
+    }
 }

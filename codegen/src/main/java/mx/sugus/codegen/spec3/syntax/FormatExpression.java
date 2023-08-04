@@ -13,7 +13,7 @@ public final class FormatExpression implements SyntaxNode {
         this.args = args;
     }
 
-    public static FormatExpression create(String format, Object[] args) {
+    public static FormatExpression create(String format, Object... args) {
         return new FormatExpression(format, args);
     }
 

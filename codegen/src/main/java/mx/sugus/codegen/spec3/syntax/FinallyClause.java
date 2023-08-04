@@ -3,10 +3,10 @@ package mx.sugus.codegen.spec3.syntax;
 import java.util.Objects;
 import mx.sugus.codegen.writer.CodegenWriter;
 
-public class FinallyClause implements SyntaxNode {
+public final class FinallyClause implements SyntaxNode {
     private final BlockStatement finallyBody;
 
-    public FinallyClause(Builder builder) {
+    FinallyClause(Builder builder) {
         this.finallyBody = Objects.requireNonNull(builder.finallyBody);
     }
 

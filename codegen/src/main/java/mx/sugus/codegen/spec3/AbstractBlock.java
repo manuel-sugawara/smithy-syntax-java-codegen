@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.function.Consumer;
+import mx.sugus.codegen.spec3.syntax.BlockStatement;
 import mx.sugus.codegen.spec3.syntax.FormatStatement;
 import mx.sugus.codegen.spec3.syntax.LiteralExpression;
 import mx.sugus.codegen.spec3.syntax.LiteralStatement;
@@ -87,25 +88,130 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
     public B forStatement(String initializer, Consumer<AbstractBlock<B, T>> forBody) {
         beginForStatement(initializer);
         forBody.accept(this);
+        return endForStatement();
+    }
+
+    // -- try-catch
+    public B beginTryStatement(SyntaxNode resources) {
+        state.push(new TryStatementSpec(resources));
         return (B) this;
     }
 
+    public B beginTryStatement() {
+        state.push(new TryStatementSpec());
+        return (B) this;
+    }
+
+    public B beginCatchStatement(SyntaxNode catchParameter) {
+        var last = peekExpecting(TryStatementSpec.class, CatchClauseSpec.class);
+        if (last instanceof TryStatementSpec t) {
+            state.push(t.addCatch(catchParameter));
+        } else {
+            state.pop();
+            var tryStatement = peekExpecting(TryStatementSpec.class);
+            state.push(tryStatement.addCatch(catchParameter));
+        }
+        return (B) this;
+    }
+
+    public B beginFinallyStatement() {
+        var last = peekExpecting(TryStatementSpec.class, CatchClauseSpec.class);
+        TryStatementSpec tryStatement;
+        if (last instanceof TryStatementSpec t) {
+            tryStatement = t;
+        } else {
+            state.pop();
+            tryStatement = peekExpecting(TryStatementSpec.class);
+        }
+        state.push(tryStatement.addFinally());
+        return (B) this;
+    }
+
+    public B endTryStatement() {
+        var last = popExpecting(TryStatementSpec.class, CatchClauseSpec.class, FinallyClauseSpec.class);
+        if (!(last instanceof TryStatementSpec)) {
+            last = popExpecting(TryStatementSpec.class);
+        }
+        return addStatement(last.build());
+    }
+
+    public B tryStatement(
+        Consumer<AbstractBlock<B, T>> tryBody,
+        SyntaxNode catchParameter,
+        Consumer<AbstractBlock<B, T>> catchBody
+    ) {
+        beginTryStatement();
+        tryBody.accept(this);
+        beginCatchStatement(catchParameter);
+        catchBody.accept(this);
+        return endTryStatement();
+    }
+
+    public B tryStatement(
+        Consumer<AbstractBlock<B, T>> tryBody,
+        String catchParameter,
+        Consumer<AbstractBlock<B, T>> catchBody
+    ) {
+        return tryStatement(tryBody, LiteralExpression.create(catchParameter), catchBody);
+    }
+
+    // -- Utils
     <E> E popExpecting(Class<E> clazz) {
         var last = state.pop();
+        if (!clazz.isInstance(last)) {
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getSimpleName() + ", but got "
+                                            + "instead: " +
+                                            last.getClass().getSimpleName());
+        }
+        return (E) last;
+    }
+
+    AbstractBlock<?, ?> popExpecting(Class<? extends AbstractBlock<?, ?>> clazz0,
+                                     Class<? extends AbstractBlock<?, ?>> clazz1) {
+        var last = state.pop();
+        if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
+                                            " or " + clazz1.getSimpleName());
+        }
+        return last;
+    }
+
+    AbstractBlock<?, ?> popExpecting(
+        Class<? extends AbstractBlock<?, ?>> clazz0,
+        Class<? extends AbstractBlock<?, ?>> clazz1,
+        Class<? extends AbstractBlock<?, ?>> clazz2
+    ) {
+        var last = state.pop();
+        if (!(clazz0.isInstance(last) || clazz1.isInstance(last) || clazz2.isInstance(last))) {
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
+                                            ", but got instead: " + last.getClass().getSimpleName());
+        }
+        return last;
+    }
+
+    <E> E peekExpecting(Class<E> clazz) {
+        var last = state.peekFirst();
         if (!clazz.isInstance(last)) {
             throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getSimpleName());
         }
         return (E) last;
     }
 
-    AbstractBlock<?, ?> popExpecting(Class<? extends AbstractBlock<?, ?>> clazz,
-                                     Class<? extends AbstractBlock<?, ?>> clazz2) {
-        var last = state.pop();
-        if (!(clazz.isInstance(last) || clazz2.isInstance(last))) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getSimpleName() +
-                                            " or " + clazz2.getSimpleName());
+    AbstractBlock<?, ?> peekExpecting(Class<? extends AbstractBlock<?, ?>> clazz0,
+                                      Class<? extends AbstractBlock<?, ?>> clazz1) {
+        var last = state.peekFirst();
+        if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
+                                            " or " + clazz1.getSimpleName() + ", but got instead: " +
+                                            last.getClass().getSimpleName());
         }
         return last;
+    }
+
+    BlockStatement toBlockStatement() {
+        return BlockStatement.builder()
+                             .addStatements(contents)
+                             .build();
     }
 
     public abstract T build();

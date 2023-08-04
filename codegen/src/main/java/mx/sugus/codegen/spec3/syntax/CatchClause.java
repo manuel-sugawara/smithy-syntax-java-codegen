@@ -3,7 +3,7 @@ package mx.sugus.codegen.spec3.syntax;
 import java.util.Objects;
 import mx.sugus.codegen.writer.CodegenWriter;
 
-public class CatchClause implements SyntaxNode {
+public final class CatchClause implements SyntaxNode {
     private final SyntaxNode catchParameter;
     private final BlockStatement catchBody;
 
