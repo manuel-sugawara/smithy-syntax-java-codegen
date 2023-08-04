@@ -1,15 +1,15 @@
 package mx.sugus.codegen.jv.spec3.syntax;
 
 public interface SyntaxVisitor<T> {
-    T visitMethod(MethodSyntax method);
+    T visitMethod(Method method);
 
-    T visitMethodBody(MethodBodySyntax body);
+    T visitMethodBody(MethodBody body);
 
-    T visitParameter(ParameterSyntax parameter);
+    T visitParameter(Parameter parameter);
 
-    T visitIfStatement(IfStatementSyntax statement);
+    T visitIfStatement(IfStatement statement);
 
-    T visitForStatement(ForStatementSyntax statement);
+    T visitForStatement(ForStatement statement);
 
     T visitLiteralExpression(LiteralExpression expression);
 

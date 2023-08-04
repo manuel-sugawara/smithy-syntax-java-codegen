@@ -4,8 +4,8 @@ import java.util.Arrays;
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.jv.SymbolConstants;
 import mx.sugus.codegen.jv.spec3.syntax.LiteralStatement;
-import mx.sugus.codegen.jv.spec3.syntax.MethodSyntax;
-import mx.sugus.codegen.jv.spec3.syntax.MethodBodySyntax;
+import mx.sugus.codegen.jv.spec3.syntax.Method;
+import mx.sugus.codegen.jv.spec3.syntax.MethodBody;
 import mx.sugus.codegen.jv.spec3.syntax.RewriteVisitor;
 import mx.sugus.codegen.jv.spec3.syntax.SyntaxNode;
 import org.junit.jupiter.api.Test;
@@ -14,20 +14,20 @@ class RewriteVisitorTest {
 
     @Test
     public void test0() {
-        var method = MethodSyntax.builder("toString")
-                                 .addModifiers(Arrays.asList(Modifier.PUBLIC, Modifier.FINAL))
-                                 .returnType(SymbolConstants.toSymbol(String.class))
-                                 .body(MethodBodySyntax.builder()
+        var method = Method.builder("toString")
+                           .addModifiers(Arrays.asList(Modifier.PUBLIC, Modifier.FINAL))
+                           .returnType(SymbolConstants.toSymbol(String.class))
+                           .body(MethodBody.builder()
                                                  .addStatement(LiteralStatement.create("return String.valueOf(this)"))
                                                  .build())
-                                 .build();
+                           .build();
         var rewriter = new RewriteVisitor() {
             @Override
-            public SyntaxNode visitMethod(MethodSyntax m) {
-                m = (MethodSyntax) super.visitMethod(m);
+            public SyntaxNode visitMethod(Method m) {
+                m = (Method) super.visitMethod(m);
                 if ("toString".equals(m.getName())) {
                     return m.toBuilder()
-                            .body(MethodBodySyntax
+                            .body(MethodBody
                                       .builder()
                                       .addStatement(LiteralStatement.create("return super.toString()"))
                                       .build())

@@ -3,11 +3,11 @@ package mx.sugus.codegen.jv.spec3.syntax;
 import java.util.Objects;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 
-public final class ForStatementSyntax implements SyntaxNode {
+public final class ForStatement implements SyntaxNode {
     private final SyntaxNode initializer;
     private final SyntaxNode statement;
 
-    ForStatementSyntax(Builder builder) {
+    ForStatement(Builder builder) {
         this.initializer = Objects.requireNonNull(builder.initializer);
         this.statement = Objects.requireNonNull(builder.statement);
     }
@@ -65,7 +65,7 @@ public final class ForStatementSyntax implements SyntaxNode {
         Builder() {
         }
 
-        public Builder(ForStatementSyntax forStatement) {
+        public Builder(ForStatement forStatement) {
             this.initializer = forStatement.initializer;
             this.statement = forStatement.statement;
         }
@@ -80,8 +80,8 @@ public final class ForStatementSyntax implements SyntaxNode {
             return this;
         }
 
-        public ForStatementSyntax build() {
-            return new ForStatementSyntax(this);
+        public ForStatement build() {
+            return new ForStatement(this);
         }
     }
 }

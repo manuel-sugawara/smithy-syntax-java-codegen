@@ -4,7 +4,7 @@ import java.util.Collection;
 import mx.sugus.codegen.jv.spec3.syntax.SyntaxNode;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 
-public class Emit {
+public final class Emit {
     public static void emitJoining(
         CodegenWriter writer, Collection<? extends SyntaxNode> emitters,
         String separator,

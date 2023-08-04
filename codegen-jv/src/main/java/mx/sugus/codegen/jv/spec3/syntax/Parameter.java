@@ -4,11 +4,11 @@ import java.util.Objects;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 import software.amazon.smithy.codegen.core.Symbol;
 
-public final class ParameterSyntax implements SyntaxNode {
+public final class Parameter implements SyntaxNode {
     private final String name;
     private final Symbol type;
 
-    public ParameterSyntax(Builder builder) {
+    public Parameter(Builder builder) {
         this.name = Objects.requireNonNull(builder.name);
         this.type = Objects.requireNonNull(builder.type);
     }
@@ -57,8 +57,8 @@ public final class ParameterSyntax implements SyntaxNode {
             return this;
         }
 
-        public ParameterSyntax build() {
-            return new ParameterSyntax(this);
+        public Parameter build() {
+            return new Parameter(this);
         }
     }
 }

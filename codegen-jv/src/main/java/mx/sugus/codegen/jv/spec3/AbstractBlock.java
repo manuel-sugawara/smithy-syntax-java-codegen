@@ -13,8 +13,8 @@ import mx.sugus.codegen.jv.spec3.syntax.SyntaxNode;
 
 @SuppressWarnings("unchecked")
 public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends SyntaxNode> {
-    protected List<SyntaxNode> contents = new ArrayList<>();
     private final Deque<AbstractBlock<?, ?>> state = new ArrayDeque<>();
+    protected List<SyntaxNode> contents = new ArrayList<>();
 
     AbstractBlock() {
         state.push(this);
@@ -37,7 +37,7 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
 
     // --- If Statements --
     public B beginIfStatement(SyntaxNode condition) {
-        state.push(new IfStatementSpec(condition));
+        state.push(new IfStatementBuilder(condition));
         return (B) this;
     }
 
@@ -46,13 +46,13 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
     }
 
     public B elseStatement() {
-        var ifStatement = popExpecting(IfStatementSpec.class);
-        this.state.push(new ElseStatementSpec(ifStatement));
+        var ifStatement = popExpecting(IfStatementBuilder.class);
+        this.state.push(new ElseStatementBuilder(ifStatement));
         return (B) this;
     }
 
     public B endIfStatement() {
-        var last = popExpecting(IfStatementSpec.class, ElseStatementSpec.class);
+        var last = popExpecting(IfStatementBuilder.class, ElseStatementBuilder.class);
         return addStatement(last.build());
     }
 
@@ -72,7 +72,7 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
 
     // --- For statement
     public B beginForStatement(SyntaxNode initializer) {
-        state.push(new ForStatementSpec(initializer));
+        state.push(new ForStatementBuilder(initializer));
         return (B) this;
     }
 
@@ -81,7 +81,7 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
     }
 
     public B endForStatement() {
-        var last = popExpecting(ForStatementSpec.class);
+        var last = popExpecting(ForStatementBuilder.class);
         return addStatement(last.build());
     }
 
@@ -93,44 +93,44 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
 
     // -- try-catch
     public B beginTryStatement(SyntaxNode resources) {
-        state.push(new TryStatementSpec(resources));
+        state.push(new TryStatementBuilder(resources));
         return (B) this;
     }
 
     public B beginTryStatement() {
-        state.push(new TryStatementSpec());
+        state.push(new TryStatementBuilder());
         return (B) this;
     }
 
     public B beginCatchStatement(SyntaxNode catchParameter) {
-        var last = peekExpecting(TryStatementSpec.class, CatchClauseSpec.class);
-        if (last instanceof TryStatementSpec t) {
+        var last = peekExpecting(TryStatementBuilder.class, CatchClauseBuilder.class);
+        if (last instanceof TryStatementBuilder t) {
             state.push(t.addCatch(catchParameter));
         } else {
             state.pop();
-            var tryStatement = peekExpecting(TryStatementSpec.class);
+            var tryStatement = peekExpecting(TryStatementBuilder.class);
             state.push(tryStatement.addCatch(catchParameter));
         }
         return (B) this;
     }
 
     public B beginFinallyStatement() {
-        var last = peekExpecting(TryStatementSpec.class, CatchClauseSpec.class);
-        TryStatementSpec tryStatement;
-        if (last instanceof TryStatementSpec t) {
+        var last = peekExpecting(TryStatementBuilder.class, CatchClauseBuilder.class);
+        TryStatementBuilder tryStatement;
+        if (last instanceof TryStatementBuilder t) {
             tryStatement = t;
         } else {
             state.pop();
-            tryStatement = peekExpecting(TryStatementSpec.class);
+            tryStatement = peekExpecting(TryStatementBuilder.class);
         }
         state.push(tryStatement.addFinally());
         return (B) this;
     }
 
     public B endTryStatement() {
-        var last = popExpecting(TryStatementSpec.class, CatchClauseSpec.class, FinallyClauseSpec.class);
-        if (!(last instanceof TryStatementSpec)) {
-            last = popExpecting(TryStatementSpec.class);
+        var last = popExpecting(TryStatementBuilder.class, CatchClauseBuilder.class, FinallyClauseBuilder.class);
+        if (!(last instanceof TryStatementBuilder)) {
+            last = popExpecting(TryStatementBuilder.class);
         }
         return addStatement(last.build());
     }
@@ -166,8 +166,10 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
         return (E) last;
     }
 
-    AbstractBlock<?, ?> popExpecting(Class<? extends AbstractBlock<?, ?>> clazz0,
-                                     Class<? extends AbstractBlock<?, ?>> clazz1) {
+    AbstractBlock<?, ?> popExpecting(
+        Class<? extends AbstractBlock<?, ?>> clazz0,
+        Class<? extends AbstractBlock<?, ?>> clazz1
+    ) {
         var last = state.pop();
         if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
             throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
@@ -197,8 +199,10 @@ public abstract class AbstractBlock<B extends AbstractBlock<B, T>, T extends Syn
         return (E) last;
     }
 
-    AbstractBlock<?, ?> peekExpecting(Class<? extends AbstractBlock<?, ?>> clazz0,
-                                      Class<? extends AbstractBlock<?, ?>> clazz1) {
+    AbstractBlock<?, ?> peekExpecting(
+        Class<? extends AbstractBlock<?, ?>> clazz0,
+        Class<? extends AbstractBlock<?, ?>> clazz1
+    ) {
         var last = state.peekFirst();
         if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
             throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +

@@ -5,14 +5,14 @@ import static org.hamcrest.Matchers.equalTo;
 
 import org.junit.jupiter.api.Test;
 
-class ForStatementSyntaxTest {
+class ForStatementTest {
 
     @Test
     public void testBasicSingleStatement() {
-        var stmt = ForStatementSyntax.builder()
-                                     .initializer(LiteralExpression.create("var x = 0; x < 10; ++x"))
-                                     .statement(LiteralStatement.create("System.out.println(fooList.get(x))"))
-                                     .build();
+        var stmt = ForStatement.builder()
+                               .initializer(LiteralExpression.create("var x = 0; x < 10; ++x"))
+                               .statement(LiteralStatement.create("System.out.println(fooList.get(x))"))
+                               .build();
 
         assertThat(stmt.toString(), equalTo(""" 
                                                 for (var x = 0; x < 10; ++x) System.out.println(fooList.get(x));
@@ -22,13 +22,13 @@ class ForStatementSyntaxTest {
 
     @Test
     public void testBasicBlockStatement() {
-        var stmt = ForStatementSyntax.builder()
-                                     .initializer(LiteralExpression.create("var x = 0; x < 10; ++x"))
-                                     .statement(BlockStatement.builder()
+        var stmt = ForStatement.builder()
+                               .initializer(LiteralExpression.create("var x = 0; x < 10; ++x"))
+                               .statement(BlockStatement.builder()
                                                               .addStatement(LiteralStatement.create("System.out.println(fooList"
                                                                                                     + ".get(x))"))
                                                               .build())
-                                     .build();
+                               .build();
 
         assertThat(stmt.toString(), equalTo(""" 
                                                 for (var x = 0; x < 10; ++x) {
@@ -39,10 +39,10 @@ class ForStatementSyntaxTest {
 
     @Test
     public void testEnhancedSingleStatement() {
-        var stmt = ForStatementSyntax.builder()
-                                     .initializer(LiteralExpression.create("var foo : fooList"))
-                                     .statement(LiteralStatement.create("System.out.println(foo)"))
-                                     .build();
+        var stmt = ForStatement.builder()
+                               .initializer(LiteralExpression.create("var foo : fooList"))
+                               .statement(LiteralStatement.create("System.out.println(foo)"))
+                               .build();
 
         assertThat(stmt.toString(), equalTo(""" 
                                                 for (var foo : fooList) System.out.println(foo);
@@ -52,12 +52,12 @@ class ForStatementSyntaxTest {
 
     @Test
     public void testEnhancedBlockStatement() {
-        var stmt = ForStatementSyntax.builder()
-                                     .initializer(LiteralExpression.create("var foo : fooList"))
-                                     .statement(BlockStatement.builder()
+        var stmt = ForStatement.builder()
+                               .initializer(LiteralExpression.create("var foo : fooList"))
+                               .statement(BlockStatement.builder()
                                                               .addStatement(LiteralStatement.create("System.out.println(foo)"))
                                                               .build())
-                                     .build();
+                               .build();
 
         assertThat(stmt.toString(), equalTo(""" 
                                                 for (var foo : fooList) {

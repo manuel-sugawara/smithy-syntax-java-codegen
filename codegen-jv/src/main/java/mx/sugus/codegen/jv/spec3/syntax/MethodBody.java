@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 
-public final class MethodBodySyntax implements SyntaxNode {
+public final class MethodBody implements SyntaxNode {
     private final List<SyntaxNode> nodes;
 
-    MethodBodySyntax(Builder builder) {
+    MethodBody(Builder builder) {
         this.nodes = List.copyOf(builder.nodes);
     }
 
@@ -45,7 +45,7 @@ public final class MethodBodySyntax implements SyntaxNode {
         public Builder() {
         }
 
-        public Builder(MethodBodySyntax methodBody) {
+        public Builder(MethodBody methodBody) {
             this.nodes.addAll(methodBody.nodes);
         }
 
@@ -59,8 +59,8 @@ public final class MethodBodySyntax implements SyntaxNode {
             return this;
         }
 
-        public MethodBodySyntax build() {
-            return new MethodBodySyntax(this);
+        public MethodBody build() {
+            return new MethodBody(this);
         }
     }
 }

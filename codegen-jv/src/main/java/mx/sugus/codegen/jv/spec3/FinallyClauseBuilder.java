@@ -2,7 +2,7 @@ package mx.sugus.codegen.jv.spec3;
 
 import mx.sugus.codegen.jv.spec3.syntax.FinallyClause;
 
-public class FinallyClauseSpec extends AbstractBlock<FinallyClauseSpec, FinallyClause> {
+public final class FinallyClauseBuilder extends AbstractBlock<FinallyClauseBuilder, FinallyClause> {
 
     @Override
     public FinallyClause build() {

@@ -5,13 +5,13 @@ import static org.hamcrest.Matchers.equalTo;
 
 import org.junit.jupiter.api.Test;
 
-class IfStatementSyntaxTest {
+class IfStatementTest {
 
     @Test
     public void testNoBlocksNoElse() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(LiteralStatement.create("return value"))
-                                    .build();
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(LiteralStatement.create("return value"))
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) return value;
                                                  """));
@@ -19,10 +19,10 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testNoBlocksWithElse() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(LiteralStatement.create("return value"))
-                                    .elseStatement(LiteralStatement.create("return null"))
-                                    .build();
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(LiteralStatement.create("return value"))
+                              .elseStatement(LiteralStatement.create("return null"))
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) return value; else return null;
                                                  """));
@@ -30,9 +30,9 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testEmptyBlocksNoElse() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(BlockStatement.builder().build())
-                                    .build();
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(BlockStatement.builder().build())
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) {
                                                 }
@@ -41,10 +41,10 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testEmptyBlocksElseEmptyBlock() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(BlockStatement.builder().build())
-                                    .elseStatement(BlockStatement.builder().build())
-                                    .build();
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(BlockStatement.builder().build())
+                              .elseStatement(BlockStatement.builder().build())
+                              .build();
 
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) {
@@ -55,11 +55,11 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testNonEmptyBlocksNoElse() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(BlockStatement.builder()
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(BlockStatement.builder()
                                                              .addStatement(LiteralStatement.create("return null"))
                                                              .build())
-                                    .build();
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) {
                                                     return null;
@@ -69,12 +69,12 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testNonEmptyBlockElseNoBlock() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(BlockStatement.builder()
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(BlockStatement.builder()
                                                              .addStatement(LiteralStatement.create("return null"))
                                                              .build())
-                                    .elseStatement(LiteralStatement.create("return value"))
-                                    .build();
+                              .elseStatement(LiteralStatement.create("return value"))
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) {
                                                     return null;
@@ -84,14 +84,14 @@ class IfStatementSyntaxTest {
 
     @Test
     public void testNonEmptyBlockElseNonEmptyBlock() {
-        var stmt = IfStatementSyntax.builder(LiteralExpression.create("value == null"))
-                                    .statement(BlockStatement.builder()
+        var stmt = IfStatement.builder(LiteralExpression.create("value == null"))
+                              .statement(BlockStatement.builder()
                                                              .addStatement(LiteralStatement.create("return value"))
                                                              .build())
-                                    .elseStatement(BlockStatement.builder()
+                              .elseStatement(BlockStatement.builder()
                                                                  .addStatement(LiteralStatement.create("return null"))
                                                                  .build())
-                                    .build();
+                              .build();
         assertThat(stmt.toString(), equalTo(""" 
                                                 if (value == null) {
                                                     return value;

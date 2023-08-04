@@ -14,14 +14,14 @@ import mx.sugus.codegen.jv.spec3.util.Emit;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 import software.amazon.smithy.codegen.core.Symbol;
 
-public final class MethodSyntax implements SyntaxNode {
+public final class Method implements SyntaxNode {
     private final String name;
     private final Set<Modifier> modifiers;
-    private final List<ParameterSyntax> parameters;
+    private final List<Parameter> parameters;
     private final Symbol returnType;
-    private final MethodBodySyntax body;
+    private final MethodBody body;
 
-    MethodSyntax(Builder builder) {
+    Method(Builder builder) {
         this.name = Objects.requireNonNull(builder.name);
         this.modifiers = new LinkedHashSet<>(builder.modifiers);
         this.parameters = List.copyOf(builder.parameters);
@@ -83,7 +83,7 @@ public final class MethodSyntax implements SyntaxNode {
         return modifiers;
     }
 
-    public List<ParameterSyntax> getParameters() {
+    public List<Parameter> getParameters() {
         return parameters;
     }
 
@@ -91,7 +91,7 @@ public final class MethodSyntax implements SyntaxNode {
         return returnType;
     }
 
-    public MethodBodySyntax getBody() {
+    public MethodBody getBody() {
         return body;
     }
 
@@ -101,16 +101,16 @@ public final class MethodSyntax implements SyntaxNode {
 
     public static class Builder {
         private final Set<Modifier> modifiers = new LinkedHashSet<>();
-        private final List<ParameterSyntax> parameters = new ArrayList<>();
+        private final List<Parameter> parameters = new ArrayList<>();
         private final String name;
         private Symbol returnType;
-        private MethodBodySyntax body;
+        private MethodBody body;
 
         public Builder(String name) {
             this.name = name;
         }
 
-        public Builder(MethodSyntax method) {
+        public Builder(Method method) {
             this.name = method.name;
             this.body = method.body;
             this.returnType = method.returnType;
@@ -128,12 +128,12 @@ public final class MethodSyntax implements SyntaxNode {
             return this;
         }
 
-        public Builder addParameter(ParameterSyntax parameter) {
+        public Builder addParameter(Parameter parameter) {
             this.parameters.add(parameter);
             return this;
         }
 
-        public Builder addParameters(Collection<ParameterSyntax> parameters) {
+        public Builder addParameters(Collection<Parameter> parameters) {
             this.parameters.clear();
             this.parameters.addAll(parameters);
             return this;
@@ -144,13 +144,13 @@ public final class MethodSyntax implements SyntaxNode {
             return this;
         }
 
-        public Builder body(MethodBodySyntax body) {
+        public Builder body(MethodBody body) {
             this.body = body;
             return this;
         }
 
-        public MethodSyntax build() {
-            return new MethodSyntax(this);
+        public Method build() {
+            return new Method(this);
         }
     }
 }

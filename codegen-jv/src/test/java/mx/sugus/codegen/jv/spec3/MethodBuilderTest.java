@@ -8,11 +8,11 @@ import mx.sugus.codegen.jv.spec3.syntax.FormatExpression;
 import mx.sugus.codegen.jv.spec3.syntax.LiteralExpression;
 import org.junit.jupiter.api.Test;
 
-class MethodSpecTest {
+class MethodBuilderTest {
 
     @Test
     public void test0() {
-        MethodSpec spec = new MethodSpec("addInteger")
+        MethodBuilder spec = new MethodBuilder("addInteger")
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Integer.class, "left")
             .addParameter(Integer.class, "right")
@@ -31,7 +31,7 @@ class MethodSpecTest {
 
     @Test
     public void test2() {
-        MethodSpec spec = new MethodSpec("addInteger")
+        MethodBuilder spec = new MethodBuilder("addInteger")
             .addModifiers(Modifier.PUBLIC)
             .addParameter(Integer.class, "left")
             .addParameter(Integer.class, "right")
@@ -51,7 +51,7 @@ class MethodSpecTest {
 
     @Test
     public void test3() {
-        MethodSpec spec = new MethodSpec("readInputStream");
+        MethodBuilder spec = new MethodBuilder("readInputStream");
         spec.addModifiers(Modifier.PUBLIC);
         spec.addParameter(InputStream.class, "input");
         spec.returns(String.class);
@@ -83,7 +83,7 @@ class MethodSpecTest {
 
     @Test
     public void test4() {
-        MethodSpec spec = new MethodSpec("readInputStream");
+        MethodBuilder spec = new MethodBuilder("readInputStream");
         spec.addModifiers(Modifier.PUBLIC);
         spec.addParameter(InputStream.class, "input");
         spec.returns(String.class);

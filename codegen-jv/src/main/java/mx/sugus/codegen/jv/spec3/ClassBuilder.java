@@ -6,24 +6,24 @@ import mx.sugus.codegen.jv.spec3.syntax.ClassField;
 import mx.sugus.codegen.jv.spec3.syntax.ClassSyntax;
 import mx.sugus.codegen.jv.spec3.syntax.FormatExpression;
 import mx.sugus.codegen.jv.spec3.syntax.LiteralExpression;
-import mx.sugus.codegen.jv.spec3.syntax.MethodSyntax;
+import mx.sugus.codegen.jv.spec3.syntax.Method;
 import mx.sugus.codegen.jv.spec3.syntax.SyntaxNode;
 
-public class ClassSpec {
+public final class ClassBuilder {
     private final ClassSyntax.Builder classBuilder;
 
-    ClassSpec(String name) {
+    ClassBuilder(String name) {
         classBuilder = ClassSyntax.builder(name);
     }
 
-    public ClassSpec addModifiers(Modifier... modifiers) {
+    public ClassBuilder addModifiers(Modifier... modifiers) {
         for (Modifier modifier : modifiers) {
             classBuilder.addModifier(modifier);
         }
         return this;
     }
 
-    public ClassSpec addField(Object type, String name) {
+    public ClassBuilder addField(Object type, String name) {
         classBuilder.addField(ClassField.builder()
                                         .addModifier(Modifier.PRIVATE)
                                         .addModifier(Modifier.FINAL)
@@ -33,7 +33,7 @@ public class ClassSpec {
         return this;
     }
 
-    public ClassSpec addField(Object type, String name, String initializer) {
+    public ClassBuilder addField(Object type, String name, String initializer) {
         classBuilder.addField(ClassField.builder()
                                         .addModifier(Modifier.PRIVATE)
                                         .addModifier(Modifier.FINAL)
@@ -44,7 +44,7 @@ public class ClassSpec {
         return this;
     }
 
-    public ClassSpec addField(Object type, String name, String format, Object... args) {
+    public ClassBuilder addField(Object type, String name, String format, Object... args) {
         classBuilder.addField(ClassField.builder()
                                         .addModifier(Modifier.PRIVATE)
                                         .addModifier(Modifier.FINAL)
@@ -55,7 +55,7 @@ public class ClassSpec {
         return this;
     }
 
-    public ClassSpec addField(Object type, String name, SyntaxNode initializer) {
+    public ClassBuilder addField(Object type, String name, SyntaxNode initializer) {
         classBuilder.addField(ClassField.builder()
                                         .addModifier(Modifier.PRIVATE)
                                         .addModifier(Modifier.FINAL)
@@ -66,12 +66,12 @@ public class ClassSpec {
         return this;
     }
 
-    public ClassSpec addField(ClassField field) {
+    public ClassBuilder addField(ClassField field) {
         classBuilder.addField(field);
         return this;
     }
 
-    public ClassSpec addMethod(MethodSyntax method) {
+    public ClassBuilder addMethod(Method method) {
         classBuilder.addMethod(method);
         return this;
     }

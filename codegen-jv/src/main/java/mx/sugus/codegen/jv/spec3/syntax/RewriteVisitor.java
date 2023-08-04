@@ -9,13 +9,13 @@ public class RewriteVisitor implements SyntaxVisitor<SyntaxNode> {
     }
 
     @Override
-    public SyntaxNode visitMethod(MethodSyntax method) {
+    public SyntaxNode visitMethod(Method method) {
         var params = method.getParameters()
                            .stream().map(p -> p.accept(this))
                            .filter(Objects::nonNull)
-                           .map(p -> (ParameterSyntax) p)
+                           .map(p -> (Parameter) p)
                            .toList();
-        var body = (MethodBodySyntax) method.getBody().accept(this);
+        var body = (MethodBody) method.getBody().accept(this);
         return method.toBuilder()
                      .addParameters(params)
                      .body(body)
@@ -23,17 +23,17 @@ public class RewriteVisitor implements SyntaxVisitor<SyntaxNode> {
     }
 
     @Override
-    public SyntaxNode visitMethodBody(MethodBodySyntax body) {
+    public SyntaxNode visitMethodBody(MethodBody body) {
         return body;
     }
 
     @Override
-    public SyntaxNode visitParameter(ParameterSyntax parameter) {
+    public SyntaxNode visitParameter(Parameter parameter) {
         return parameter;
     }
 
     @Override
-    public SyntaxNode visitIfStatement(IfStatementSyntax ifStatement) {
+    public SyntaxNode visitIfStatement(IfStatement ifStatement) {
         var condition = ifStatement.getCondition().accept(this);
         var statement = ifStatement.getStatement().accept(this);
         var elseStatement = ifStatement.getElseStatement();
@@ -48,7 +48,7 @@ public class RewriteVisitor implements SyntaxVisitor<SyntaxNode> {
     }
 
     @Override
-    public SyntaxNode visitForStatement(ForStatementSyntax forStatement) {
+    public SyntaxNode visitForStatement(ForStatement forStatement) {
         var initializer = forStatement.getInitializer().accept(this);
         var statement = forStatement.getStatement().accept(this);
         return forStatement.toBuilder()
@@ -98,7 +98,7 @@ public class RewriteVisitor implements SyntaxVisitor<SyntaxNode> {
     @Override
     public SyntaxNode visitClass(ClassSyntax aClass) {
         var fields = aClass.getFields().stream().map(n -> n.accept(this)).map(x -> (ClassField) x).toList();
-        var methods = aClass.getMethods().stream().map(n -> n.accept(this)).map(x -> (MethodSyntax) x).toList();
+        var methods = aClass.getMethods().stream().map(n -> n.accept(this)).map(x -> (Method) x).toList();
         return aClass.toBuilder()
                      .addFields(fields)
                      .addMethods(methods)

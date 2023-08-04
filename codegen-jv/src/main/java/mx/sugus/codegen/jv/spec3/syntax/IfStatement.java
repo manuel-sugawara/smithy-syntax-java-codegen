@@ -3,12 +3,12 @@ package mx.sugus.codegen.jv.spec3.syntax;
 import java.util.Objects;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 
-public final class IfStatementSyntax implements SyntaxNode {
+public final class IfStatement implements SyntaxNode {
     private final SyntaxNode condition;
     private final SyntaxNode statement;
     private final SyntaxNode elseStatement;
 
-    IfStatementSyntax(Builder builder) {
+    IfStatement(Builder builder) {
         this.condition = Objects.requireNonNull(builder.condition, "condition");
         this.statement = Objects.requireNonNull(builder.statement, "statement");
         this.elseStatement = builder.elseStatement;
@@ -74,7 +74,7 @@ public final class IfStatementSyntax implements SyntaxNode {
             this.condition = condition;
         }
 
-        Builder(IfStatementSyntax statement) {
+        Builder(IfStatement statement) {
             this.condition = statement.condition;
             this.statement = statement.statement;
             this.elseStatement = statement.elseStatement;
@@ -95,8 +95,8 @@ public final class IfStatementSyntax implements SyntaxNode {
             return this;
         }
 
-        public IfStatementSyntax build() {
-            return new IfStatementSyntax(this);
+        public IfStatement build() {
+            return new IfStatement(this);
         }
     }
 }

@@ -14,7 +14,7 @@ import mx.sugus.codegen.jv.writer.CodegenWriter;
 
 public final class ClassSyntax implements SyntaxNode {
     public final List<ClassField> fields;
-    public final List<MethodSyntax> methods;
+    public final List<Method> methods;
     private final String name;
     private final Set<Modifier> modifiers;
 
@@ -85,7 +85,7 @@ public final class ClassSyntax implements SyntaxNode {
         return fields;
     }
 
-    public List<MethodSyntax> getMethods() {
+    public List<Method> getMethods() {
         return methods;
     }
 
@@ -96,7 +96,7 @@ public final class ClassSyntax implements SyntaxNode {
     public static class Builder {
         public final List<ClassField> fields = new ArrayList<>();
         private final Set<Modifier> modifiers = new LinkedHashSet<>();
-        private final List<MethodSyntax> methods = new ArrayList<>();
+        private final List<Method> methods = new ArrayList<>();
         private String name;
 
         public Builder() {
@@ -140,12 +140,12 @@ public final class ClassSyntax implements SyntaxNode {
             return this;
         }
 
-        public Builder addMethod(MethodSyntax method) {
+        public Builder addMethod(Method method) {
             this.methods.add(method);
             return this;
         }
 
-        public Builder addMethods(Collection<MethodSyntax> methods) {
+        public Builder addMethods(Collection<Method> methods) {
             this.methods.clear(); // XXX Should we do this?
             this.methods.addAll(methods);
             return this;
