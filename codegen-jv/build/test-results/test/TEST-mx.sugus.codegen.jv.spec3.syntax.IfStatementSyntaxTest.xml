@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2023-08-04T14:09:38" hostname="Manuels-MacBook-Pro.local" time="0.021">
+  <properties/>
+  <testcase name="testNonEmptyBlockElseNoBlock()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.002"/>
+  <testcase name="testEmptyBlocksNoElse()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.001"/>
+  <testcase name="testNonEmptyBlockElseNonEmptyBlock()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.002"/>
+  <testcase name="testNonEmptyBlocksNoElse()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.001"/>
+  <testcase name="testNoBlocksWithElse()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.001"/>
+  <testcase name="testNoBlocksNoElse()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.001"/>
+  <testcase name="testEmptyBlocksElseEmptyBlock()" classname="mx.sugus.codegen.jv.spec3.syntax.IfStatementSyntaxTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

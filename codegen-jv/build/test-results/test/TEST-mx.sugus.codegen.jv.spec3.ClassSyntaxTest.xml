@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mx.sugus.codegen.jv.spec3.ClassSyntaxTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-08-04T14:09:38" hostname="Manuels-MacBook-Pro.local" time="0.035">
+  <properties/>
+  <testcase name="test0()" classname="mx.sugus.codegen.jv.spec3.ClassSyntaxTest" time="0.035"/>
+  <system-out><![CDATA[========================
+public class MyStructure {
+    private final String name;
+    private final int age;
+}
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
