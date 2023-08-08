@@ -61,7 +61,7 @@ import javax.lang.model.type.TypeMirror;
  *   <li>{@code $]} ends a statement.
  * </ul>
  */
-public final class CodeBlock {
+public final class CodeSnippet implements SyntaxNode{
     private static final Pattern NAMED_ARGUMENT =
         Pattern.compile("\\$(?<argumentName>[\\w_]+):(?<typeChar>[\\w]).*");
     private static final Pattern LOWERCASE = Pattern.compile("[a-z]+[\\w_]*");
@@ -72,48 +72,48 @@ public final class CodeBlock {
     final List<String> formatParts;
     final List<Object> args;
 
-    private CodeBlock(Builder builder) {
+    private CodeSnippet(Builder builder) {
         this.formatParts = Util.immutableList(builder.formatParts);
         this.args = Util.immutableList(builder.args);
     }
 
-    public static CodeBlock of(String format, Object... args) {
+    public static CodeSnippet of(String format, Object... args) {
         return new Builder().add(format, args).build();
     }
 
     /**
-     * Joins {@code codeBlocks} into a single {@link CodeBlock}, each separated by {@code separator}. For example, joining
+     * Joins {@code codeBlocks} into a single {@link CodeSnippet}, each separated by {@code separator}. For example, joining
      * {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would produce {@code String s, Object o, int i}.
      */
-    public static CodeBlock join(Iterable<CodeBlock> codeBlocks, String separator) {
+    public static CodeSnippet join(Iterable<CodeSnippet> codeBlocks, String separator) {
         return StreamSupport.stream(codeBlocks.spliterator(), false).collect(joining(separator));
     }
 
     /**
-     * A {@link Collector} implementation that joins {@link CodeBlock} instances together into one separated by {@code separator}.
+     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by {@code separator}.
      * For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would produce
      * {@code String s, Object o, int i}.
      */
-    public static Collector<CodeBlock, ?, CodeBlock> joining(String separator) {
+    public static Collector<CodeSnippet, ?, CodeSnippet> joining(String separator) {
         return Collector.of(
-            () -> new CodeBlockJoiner(separator, builder()),
-            CodeBlockJoiner::add,
-            CodeBlockJoiner::merge,
-            CodeBlockJoiner::join);
+            () -> new CodeSnippetJoiner(separator, builder()),
+            CodeSnippetJoiner::add,
+            CodeSnippetJoiner::merge,
+            CodeSnippetJoiner::join);
     }
 
     /**
-     * A {@link Collector} implementation that joins {@link CodeBlock} instances together into one separated by {@code separator}.
+     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by {@code separator}.
      * For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would produce
      * {@code String s, Object o, int i}.
      */
-    public static Collector<CodeBlock, ?, CodeBlock> joining(
+    public static Collector<CodeSnippet, ?, CodeSnippet> joining(
         String separator, String prefix, String suffix) {
         Builder builder = builder().add("$N", prefix);
         return Collector.of(
-            () -> new CodeBlockJoiner(separator, builder),
-            CodeBlockJoiner::add,
-            CodeBlockJoiner::merge,
+            () -> new CodeSnippetJoiner(separator, builder),
+            CodeSnippetJoiner::add,
+            CodeSnippetJoiner::merge,
             joiner -> {
                 builder.add(of("$N", suffix));
                 return joiner.join();
@@ -163,6 +163,11 @@ public final class CodeBlock {
         builder.formatParts.addAll(formatParts);
         builder.args.addAll(args);
         return builder;
+    }
+
+    @Override
+    public void emit(CodeWriter writer) {
+        throw new UnsupportedOperationException();
     }
 
     public static final class Builder {
@@ -433,11 +438,11 @@ public final class CodeBlock {
             return this;
         }
 
-        public Builder addStatement(CodeBlock codeBlock) {
+        public Builder addStatement(CodeSnippet codeBlock) {
             return addStatement("$L", codeBlock);
         }
 
-        public Builder add(CodeBlock codeBlock) {
+        public Builder add(CodeSnippet codeBlock) {
             formatParts.addAll(codeBlock.formatParts);
             args.addAll(codeBlock.args);
             return this;
@@ -459,22 +464,22 @@ public final class CodeBlock {
             return this;
         }
 
-        public CodeBlock build() {
-            return new CodeBlock(this);
+        public CodeSnippet build() {
+            return new CodeSnippet(this);
         }
     }
 
-    private static final class CodeBlockJoiner {
+    private static final class CodeSnippetJoiner {
         private final String delimiter;
         private final Builder builder;
         private boolean first = true;
 
-        CodeBlockJoiner(String delimiter, Builder builder) {
+        CodeSnippetJoiner(String delimiter, Builder builder) {
             this.delimiter = delimiter;
             this.builder = builder;
         }
 
-        CodeBlockJoiner add(CodeBlock codeBlock) {
+        CodeSnippetJoiner add(CodeSnippet codeBlock) {
             if (!first) {
                 builder.add(delimiter);
             }
@@ -484,15 +489,15 @@ public final class CodeBlock {
             return this;
         }
 
-        CodeBlockJoiner merge(CodeBlockJoiner other) {
-            CodeBlock otherBlock = other.builder.build();
+        CodeSnippetJoiner merge(CodeSnippetJoiner other) {
+            CodeSnippet otherBlock = other.builder.build();
             if (!otherBlock.isEmpty()) {
                 add(otherBlock);
             }
             return this;
         }
 
-        CodeBlock join() {
+        CodeSnippet join() {
             return builder.build();
         }
     }

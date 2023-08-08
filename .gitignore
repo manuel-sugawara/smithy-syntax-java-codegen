@@ -17,3 +17,4 @@ wrapper
 /buildSrc/build/
 /codegen/build
 /codegen-test/build
+/codegen-jv/build

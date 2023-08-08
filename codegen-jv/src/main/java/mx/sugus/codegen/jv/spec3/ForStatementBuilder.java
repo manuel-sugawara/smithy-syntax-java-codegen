@@ -17,7 +17,6 @@ public final class ForStatementBuilder extends AbstractBlock<ForStatementBuilder
         var forBody = BlockStatement.builder()
                                     .addStatements(contents)
                                     .build();
-
         return ForStatement.builder()
                            .initializer(initializer)
                            .statement(forBody)

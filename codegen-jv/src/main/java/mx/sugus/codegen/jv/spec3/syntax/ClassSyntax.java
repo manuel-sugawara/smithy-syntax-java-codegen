@@ -13,8 +13,8 @@ import mx.sugus.codegen.jv.spec2.TypeSpec;
 import mx.sugus.codegen.jv.writer.CodegenWriter;
 
 public final class ClassSyntax implements SyntaxNode {
-    public final List<ClassField> fields;
-    public final List<Method> methods;
+    private final List<ClassField> fields;
+    private final List<Method> methods;
     private final String name;
     private final Set<Modifier> modifiers;
 
@@ -94,7 +94,7 @@ public final class ClassSyntax implements SyntaxNode {
     }
 
     public static class Builder {
-        public final List<ClassField> fields = new ArrayList<>();
+        private final List<ClassField> fields = new ArrayList<>();
         private final Set<Modifier> modifiers = new LinkedHashSet<>();
         private final List<Method> methods = new ArrayList<>();
         private String name;

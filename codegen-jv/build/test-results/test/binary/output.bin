@@ -1,92 +1,0 @@
-========================
-public class MyStructure {
-    private final String name;
-    private final int age;
-}
-
-====================
-9public Integer addInteger(Integer left, Integer right) {
-    if (left == null) {
-        if (right == null) {
-            return null;
-        } else {
-            return right;
-
-        }
-    }
-    return left + right;
-}
-
-====================
-9public Integer addInteger(Integer left, Integer right) {
-    if (left == null) {
-        if (right == null) {
-            return null;
-        } else {
-            return right;
-
-        }
-    }
-    return left + right;
-}
-
-====================
-import java.io.IOException;
-import java.io.InputStream;
-*import java.nio.charset.StandardCharsets;
-
-
-3public String readInputStream(InputStream input) {
-    if (input == null) {
-1        throw new NullPointerException("input");
-    }
-    String result;
-
-    try {
-*        var bytes = input.readAllBytes();
-<        result = new String(bytes, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-'        throw new RuntimeException(e);
-    } finally {
-        try {
-            input.close();
-"        } catch (IOException e) {
-        } 
-    }
-}
-
-====================
-import java.io.IOException;
-import java.io.InputStream;
-*import java.nio.charset.StandardCharsets;
-
-
-3public String readInputStream(InputStream input) {
-    if (input == null) {
-1        throw new NullPointerException("input");
-    }
-    String result;
-
-    try {
-*        var bytes = input.readAllBytes();
-<        result = new String(bytes, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-'        throw new RuntimeException(e);
-    } finally {
-        try {
-            input.close();
-"        } catch (IOException e) {
-        } 
-    }
-}
-
-	================= prev:
-	!public final String toString() {
-	!    return String.valueOf(this);
-	}
-	
-	=================  new:
-	!public final String toString() {
-	    return super.toString();
-	}
-	
