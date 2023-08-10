@@ -19,7 +19,6 @@ import static com.squareup.javapoet.Util.characterLiteralWithoutSingleQuotes;
 import static com.squareup.javapoet.Util.checkArgument;
 import static com.squareup.javapoet.Util.checkNotNull;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -109,7 +108,7 @@ public final class AnnotationSpec {
         return builder(ClassName.get(type));
     }
 
-    void emit(CodeWriter codeWriter, boolean inline) throws IOException {
+    void emit(CodeWriter codeWriter, boolean inline) {
         String whitespace = inline ? "" : "\n";
         String memberSeparator = inline ? ", " : ",\n";
         if (members.isEmpty()) {
@@ -146,7 +145,7 @@ public final class AnnotationSpec {
     }
 
     private void emitAnnotationValues(CodeWriter codeWriter, String whitespace,
-                                      String memberSeparator, List<CodeBlock> values) throws IOException {
+                                      String memberSeparator, List<CodeBlock> values) {
         if (values.size() == 1) {
             codeWriter.indent(2);
             codeWriter.emit(values.get(0));
@@ -198,13 +197,9 @@ public final class AnnotationSpec {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            CodeWriter codeWriter = new CodeWriter(out);
-            codeWriter.emit("$L", this);
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
+        CodeWriter codeWriter = new CodeWriter(out);
+        codeWriter.emit("$L", this);
+        return out.toString();
     }
 
     public static final class Builder {

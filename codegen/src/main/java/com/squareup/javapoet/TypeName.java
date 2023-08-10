@@ -15,7 +15,6 @@
  */
 package com.squareup.javapoet;
 
-import java.io.IOException;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -440,20 +439,16 @@ public class TypeName {
     public final String toString() {
         String result = cachedString;
         if (result == null) {
-            try {
-                StringBuilder resultBuilder = new StringBuilder();
-                CodeWriter codeWriter = new CodeWriter(resultBuilder);
-                emit(codeWriter);
-                result = resultBuilder.toString();
-                cachedString = result;
-            } catch (IOException e) {
-                throw new AssertionError();
-            }
+            StringBuilder resultBuilder = new StringBuilder();
+            CodeWriter codeWriter = new CodeWriter(resultBuilder);
+            emit(codeWriter);
+            result = resultBuilder.toString();
+            cachedString = result;
         }
         return result;
     }
 
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         if (keyword == null) {
             throw new AssertionError();
         }
@@ -465,7 +460,7 @@ public class TypeName {
         return out.emitAndIndent(keyword);
     }
 
-    CodeWriter emitAnnotations(CodeWriter out) throws IOException {
+    CodeWriter emitAnnotations(CodeWriter out) {
         for (AnnotationSpec annotation : annotations) {
             annotation.emit(out, true);
             out.emit(" ");

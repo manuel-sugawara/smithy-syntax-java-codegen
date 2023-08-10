@@ -17,7 +17,6 @@ package com.squareup.javapoet;
 
 import static com.squareup.javapoet.Util.checkArgument;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +60,7 @@ import javax.lang.model.type.TypeMirror;
  *   <li>{@code $]} ends a statement.
  * </ul>
  */
-public final class CodeSnippet implements SyntaxNode{
+public final class CodeSnippet implements SyntaxNode {
     private static final Pattern NAMED_ARGUMENT =
         Pattern.compile("\\$(?<argumentName>[\\w_]+):(?<typeChar>[\\w]).*");
     private static final Pattern LOWERCASE = Pattern.compile("[a-z]+[\\w_]*");
@@ -90,9 +89,9 @@ public final class CodeSnippet implements SyntaxNode{
     }
 
     /**
-     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by {@code separator}.
-     * For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would produce
-     * {@code String s, Object o, int i}.
+     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by
+     * {@code separator}. For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would
+     * produce {@code String s, Object o, int i}.
      */
     public static Collector<CodeSnippet, ?, CodeSnippet> joining(String separator) {
         return Collector.of(
@@ -103,9 +102,9 @@ public final class CodeSnippet implements SyntaxNode{
     }
 
     /**
-     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by {@code separator}.
-     * For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would produce
-     * {@code String s, Object o, int i}.
+     * A {@link Collector} implementation that joins {@link CodeSnippet} instances together into one separated by
+     * {@code separator}. For example, joining {@code String s}, {@code Object o} and {@code int i} using {@code ", "} would
+     * produce {@code String s, Object o, int i}.
      */
     public static Collector<CodeSnippet, ?, CodeSnippet> joining(
         String separator, String prefix, String suffix) {
@@ -150,12 +149,8 @@ public final class CodeSnippet implements SyntaxNode{
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            new CodeWriter(out).emit(this);
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        new CodeWriter(out).emit(this);
+        return out.toString();
     }
 
     public Builder toBuilder() {

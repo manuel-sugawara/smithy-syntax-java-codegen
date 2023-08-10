@@ -18,6 +18,7 @@ package com.squareup.javapoet;
 import static com.squareup.javapoet.Util.checkNotNull;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Implements soft line wrapping on an appendable. To use, append characters using {@link #append} or soft-wrapping spaces using
@@ -64,38 +65,42 @@ final class LineWrapper {
     /**
      * Emit {@code s}. This may be buffered to permit line wraps to be inserted.
      */
-    void append(String s) throws IOException {
+    void append(String s) {
         if (closed) {
             throw new IllegalStateException("closed");
         }
 
-        if (nextFlush != null) {
-            int nextNewline = s.indexOf('\n');
+        try {
+            if (nextFlush != null) {
+                int nextNewline = s.indexOf('\n');
 
-            // If s doesn't cause the current line to cross the limit, buffer it and return. We'll decide
-            // whether or not we have to wrap it later.
-            if (nextNewline == -1 && column + s.length() <= columnLimit) {
-                buffer.append(s);
-                column += s.length();
-                return;
+                // If s doesn't cause the current line to cross the limit, buffer it and return. We'll decide
+                // whether we have to wrap it later.
+                if (nextNewline == -1 && column + s.length() <= columnLimit) {
+                    buffer.append(s);
+                    column += s.length();
+                    return;
+                }
+
+                // Wrap if appending s would overflow the current line.
+                boolean wrap = nextNewline == -1 || column + nextNewline > columnLimit;
+                flush(wrap ? FlushType.WRAP : nextFlush);
             }
 
-            // Wrap if appending s would overflow the current line.
-            boolean wrap = nextNewline == -1 || column + nextNewline > columnLimit;
-            flush(wrap ? FlushType.WRAP : nextFlush);
+            out.append(s);
+            int lastNewline = s.lastIndexOf('\n');
+            column = lastNewline != -1
+                     ? s.length() - lastNewline - 1
+                     : column + s.length();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        out.append(s);
-        int lastNewline = s.lastIndexOf('\n');
-        column = lastNewline != -1
-                 ? s.length() - lastNewline - 1
-                 : column + s.length();
     }
 
     /**
      * Emit either a space or a newline character.
      */
-    void wrappingSpace(int indentLevel) throws IOException {
+    void wrappingSpace(int indentLevel) {
         if (closed) {
             throw new IllegalStateException("closed");
         }
@@ -111,7 +116,7 @@ final class LineWrapper {
     /**
      * Emit a newline character if the line will exceed it's limit, otherwise do nothing.
      */
-    void zeroWidthSpace(int indentLevel) throws IOException {
+    void zeroWidthSpace(int indentLevel) {
         if (closed) {
             throw new IllegalStateException("closed");
         }
@@ -129,7 +134,7 @@ final class LineWrapper {
     /**
      * Flush any outstanding text and forbid future writes to this line wrapper.
      */
-    void close() throws IOException {
+    void close() {
         if (nextFlush != null) {
             flush(nextFlush);
         }
@@ -139,29 +144,33 @@ final class LineWrapper {
     /**
      * Write the space followed by any buffered text that follows it.
      */
-    private void flush(FlushType flushType) throws IOException {
-        switch (flushType) {
-            case WRAP:
-                out.append('\n');
-                for (int i = 0; i < indentLevel; i++) {
-                    out.append(indent);
-                }
-                column = indentLevel * indent.length();
-                column += buffer.length();
-                break;
-            case SPACE:
-                out.append(' ');
-                break;
-            case EMPTY:
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown FlushType: " + flushType);
-        }
+    private void flush(FlushType flushType) {
+        try {
+            switch (flushType) {
+                case WRAP:
+                    out.append('\n');
+                    for (int i = 0; i < indentLevel; i++) {
+                        out.append(indent);
+                    }
+                    column = indentLevel * indent.length();
+                    column += buffer.length();
+                    break;
+                case SPACE:
+                    out.append(' ');
+                    break;
+                case EMPTY:
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown FlushType: " + flushType);
+            }
 
-        out.append(buffer);
-        buffer.delete(0, buffer.length());
-        indentLevel = -1;
-        nextFlush = null;
+            out.append(buffer);
+            buffer.delete(0, buffer.length());
+            indentLevel = -1;
+            nextFlush = null;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private enum FlushType {

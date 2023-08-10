@@ -176,7 +176,7 @@ public final class TypeVariableName extends TypeName {
     }
 
     @Override
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         emitAnnotations(out);
         return out.emitAndIndent(name);
     }

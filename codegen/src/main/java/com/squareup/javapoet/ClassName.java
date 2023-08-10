@@ -273,7 +273,7 @@ public final class ClassName extends TypeName implements Comparable<ClassName> {
     }
 
     @Override
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         boolean charsEmitted = false;
         for (ClassName className : enclosingClasses()) {
             String simpleName;

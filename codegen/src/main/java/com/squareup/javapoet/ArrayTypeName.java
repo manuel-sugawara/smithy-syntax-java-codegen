@@ -87,23 +87,23 @@ public final class ArrayTypeName extends TypeName {
     }
 
     @Override
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         return emit(out, false);
     }
 
-    CodeWriter emit(CodeWriter out, boolean varargs) throws IOException {
+    CodeWriter emit(CodeWriter out, boolean varargs) {
         emitLeafType(out);
         return emitBrackets(out, varargs);
     }
 
-    private CodeWriter emitLeafType(CodeWriter out) throws IOException {
+    private CodeWriter emitLeafType(CodeWriter out) {
         if (TypeName.asArray(componentType) != null) {
             return TypeName.asArray(componentType).emitLeafType(out);
         }
         return componentType.emit(out);
     }
 
-    private CodeWriter emitBrackets(CodeWriter out, boolean varargs) throws IOException {
+    private CodeWriter emitBrackets(CodeWriter out, boolean varargs) {
         if (isAnnotated()) {
             out.emit(" ");
             emitAnnotations(out);

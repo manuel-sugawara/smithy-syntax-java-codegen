@@ -16,11 +16,11 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     }
 
     public B addStatement(String statement) {
-        return addStatement(CodeSnippet.of(statement));
+        return addStatement(Statement.of(statement));
     }
 
     public B addStatement(String format, Object... args) {
-        return addStatement(CodeSnippet.of(format, args));
+        return addStatement(Statement.of(format, args));
     }
 
     public B addStatement(SyntaxNode node) {

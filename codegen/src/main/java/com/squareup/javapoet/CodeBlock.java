@@ -17,7 +17,6 @@ package com.squareup.javapoet;
 
 import static com.squareup.javapoet.Util.checkArgument;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -150,12 +149,8 @@ public final class CodeBlock {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            new CodeWriter(out).emit(this);
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        new CodeWriter(out).emit(this);
+        return out.toString();
     }
 
     public Builder toBuilder() {

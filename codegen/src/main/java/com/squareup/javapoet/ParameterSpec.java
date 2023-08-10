@@ -18,7 +18,6 @@ package com.squareup.javapoet;
 import static com.squareup.javapoet.Util.checkArgument;
 import static com.squareup.javapoet.Util.checkNotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,8 +55,8 @@ public final class ParameterSpec {
         // Copying parameter annotations can be incorrect so we're deliberately not including them.
         // See https://github.com/square/javapoet/issues/482.
         return builder(type, name)
-                            .addModifiers(element.getModifiers())
-                            .build();
+            .addModifiers(element.getModifiers())
+            .build();
     }
 
     static List<ParameterSpec> parametersOf(ExecutableElement method) {
@@ -92,7 +91,7 @@ public final class ParameterSpec {
         return modifiers.contains(modifier);
     }
 
-    void emit(CodeWriter codeWriter, boolean varargs) throws IOException {
+    void emit(CodeWriter codeWriter, boolean varargs) {
         codeWriter.emitAnnotations(annotations, true);
         codeWriter.emitModifiers(modifiers);
         if (varargs) {
@@ -125,13 +124,9 @@ public final class ParameterSpec {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            CodeWriter codeWriter = new CodeWriter(out);
-            emit(codeWriter, false);
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        CodeWriter codeWriter = new CodeWriter(out);
+        emit(codeWriter, false);
+        return out.toString();
     }
 
     public Builder toBuilder() {

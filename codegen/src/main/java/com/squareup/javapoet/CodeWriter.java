@@ -149,7 +149,7 @@ final class CodeWriter {
         return this;
     }
 
-    public void emitComment(CodeBlock codeBlock) throws IOException {
+    public void emitComment(CodeBlock codeBlock) {
         trailingNewline = true; // Force the '//' prefix for the comment.
         comment = true;
         try {
@@ -160,7 +160,7 @@ final class CodeWriter {
         }
     }
 
-    public void emitJavadoc(CodeBlock javadocCodeBlock) throws IOException {
+    public void emitJavadoc(CodeBlock javadocCodeBlock) {
         if (javadocCodeBlock.isEmpty()) {
             return;
         }
@@ -175,7 +175,7 @@ final class CodeWriter {
         emit(" */\n");
     }
 
-    public void emitAnnotations(List<AnnotationSpec> annotations, boolean inline) throws IOException {
+    public void emitAnnotations(List<AnnotationSpec> annotations, boolean inline) {
         for (AnnotationSpec annotationSpec : annotations) {
             annotationSpec.emit(this, inline);
             emit(inline ? " " : "\n");
@@ -186,7 +186,7 @@ final class CodeWriter {
      * Emits {@code modifiers} in the standard order. Modifiers in {@code implicitModifiers} will not be emitted.
      */
     public void emitModifiers(Set<Modifier> modifiers, Set<Modifier> implicitModifiers)
-        throws IOException {
+        {
         if (modifiers.isEmpty()) {
             return;
         }
@@ -199,7 +199,7 @@ final class CodeWriter {
         }
     }
 
-    public void emitModifiers(Set<Modifier> modifiers) throws IOException {
+    public void emitModifiers(Set<Modifier> modifiers) {
         emitModifiers(modifiers, Collections.emptySet());
     }
 
@@ -207,7 +207,7 @@ final class CodeWriter {
      * Emit type variables with their bounds. This should only be used when declaring type variables; everywhere else bounds are
      * omitted.
      */
-    public void emitTypeVariables(List<TypeVariableName> typeVariables) throws IOException {
+    public void emitTypeVariables(List<TypeVariableName> typeVariables) {
         if (typeVariables.isEmpty()) {
             return;
         }
@@ -236,19 +236,19 @@ final class CodeWriter {
         typeVariables.forEach(typeVariable -> currentTypeVariables.remove(typeVariable.name));
     }
 
-    public CodeWriter emit(String s) throws IOException {
+    public CodeWriter emit(String s) {
         return emitAndIndent(s);
     }
 
-    public CodeWriter emit(String format, Object... args) throws IOException {
+    public CodeWriter emit(String format, Object... args) {
         return emit(CodeBlock.of(format, args));
     }
 
-    public CodeWriter emit(CodeBlock codeBlock) throws IOException {
+    public CodeWriter emit(CodeBlock codeBlock) {
         return emit(codeBlock, false);
     }
 
-    public CodeWriter emit(CodeBlock codeBlock, boolean ensureTrailingNewline) throws IOException {
+    public CodeWriter emit(CodeBlock codeBlock, boolean ensureTrailingNewline) {
         int a = 0;
         ClassName deferredTypeName = null; // used by "import static" logic
         ListIterator<String> partIterator = codeBlock.formatParts.listIterator();
@@ -343,11 +343,11 @@ final class CodeWriter {
         return this;
     }
 
-    public CodeWriter emit(CodeSnippet codeBlock) throws IOException {
+    public CodeWriter emit(CodeSnippet codeBlock) {
         return emit(codeBlock, false);
     }
 
-    public CodeWriter emit(CodeSnippet codeBlock, boolean ensureTrailingNewline) throws IOException {
+    public CodeWriter emit(CodeSnippet codeBlock, boolean ensureTrailingNewline) {
         int a = 0;
         ClassName deferredTypeName = null; // used by "import static" logic
         ListIterator<String> partIterator = codeBlock.formatParts.listIterator();
@@ -442,12 +442,12 @@ final class CodeWriter {
         return this;
     }
 
-    public CodeWriter emitWrappingSpace() throws IOException {
+    public CodeWriter emitWrappingSpace() {
         out.wrappingSpace(indentLevel + 2);
         return this;
     }
 
-    private boolean emitStaticImportMember(String canonical, String part) throws IOException {
+    private boolean emitStaticImportMember(String canonical, String part) {
         String partWithoutLeadingDot = part.substring(1);
         if (partWithoutLeadingDot.isEmpty()) {
             return false;
@@ -465,7 +465,7 @@ final class CodeWriter {
         return false;
     }
 
-    private void emitLiteral(Object o) throws IOException {
+    private void emitLiteral(Object o) {
         if (o instanceof TypeSpec) {
             TypeSpec typeSpec = (TypeSpec) o;
             typeSpec.emit(this, null, Collections.emptySet());
@@ -579,7 +579,7 @@ final class CodeWriter {
      * Emits {@code s} with indentation as required. It's important that all code that writes to {@link #out} does it through
      * here, since we emit indentation lazily in order to avoid unnecessary trailing whitespace.
      */
-    CodeWriter emitAndIndent(String s) throws IOException {
+    CodeWriter emitAndIndent(String s) {
         boolean first = true;
         for (String line : LINE_BREAKING_PATTERN.split(s, -1)) {
             // Emit a newline character. Make sure blank lines in Javadoc & comments look good.
@@ -619,7 +619,7 @@ final class CodeWriter {
         return this;
     }
 
-    private void emitIndentation() throws IOException {
+    private void emitIndentation() {
         for (int j = 0; j < indentLevel; j++) {
             out.append(indent);
         }

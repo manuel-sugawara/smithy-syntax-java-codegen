@@ -20,7 +20,6 @@ import static com.squareup.javapoet.Util.checkNotNull;
 import static com.squareup.javapoet.Util.checkState;
 import static com.squareup.javapoet.Util.requireExactlyOneOf;
 
-import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -185,8 +184,7 @@ public final class TypeSpec {
         return builder;
     }
 
-    void emit(CodeWriter codeWriter, String enumName, Set<Modifier> implicitModifiers)
-        throws IOException {
+    void emit(CodeWriter codeWriter, String enumName, Set<Modifier> implicitModifiers) {
         // Nested classes interrupt wrapped line indentation. Stash the current wrapping state and put
         // it back afterwards when this type is complete.
         int previousStatementLine = codeWriter.statementLine;
@@ -399,13 +397,9 @@ public final class TypeSpec {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            CodeWriter codeWriter = new CodeWriter(out);
-            emit(codeWriter, null, Collections.emptySet());
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        CodeWriter codeWriter = new CodeWriter(out);
+        emit(codeWriter, null, Collections.emptySet());
+        return out.toString();
     }
 
     public enum Kind {

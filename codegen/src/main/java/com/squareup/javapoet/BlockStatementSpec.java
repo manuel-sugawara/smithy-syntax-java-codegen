@@ -20,6 +20,10 @@ public class BlockStatementSpec implements SyntaxNode {
         throw new UnsupportedOperationException();
     }
 
+    public Collection<? extends SyntaxNode> nodes() {
+        return this.nodes;
+    }
+
     public static final class Builder {
         private final List<SyntaxNode> nodes = new ArrayList<>();
 

@@ -101,7 +101,7 @@ public final class ParameterizedTypeName extends TypeName {
     }
 
     @Override
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         if (enclosingType != null) {
             enclosingType.emit(out);
             out.emit(".");

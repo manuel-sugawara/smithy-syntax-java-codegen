@@ -120,7 +120,7 @@ public final class WildcardTypeName extends TypeName {
     }
 
     @Override
-    CodeWriter emit(CodeWriter out) throws IOException {
+    CodeWriter emit(CodeWriter out) {
         if (lowerBounds.size() == 1) {
             return out.emit("? super $T", lowerBounds.get(0));
         }

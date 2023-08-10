@@ -19,30 +19,20 @@ import static com.squareup.javapoet.Util.checkArgument;
 import static com.squareup.javapoet.Util.checkNotNull;
 import static com.squareup.javapoet.Util.checkState;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.util.Types;
 
 /**
  * A generated constructor or method declaration.
  */
-public final class MethodSpec {
+public final class MethodSpec implements SyntaxNode {
     static final String CONSTRUCTOR = "<init>";
 
     public final String name;
@@ -56,6 +46,8 @@ public final class MethodSpec {
     public final List<TypeName> exceptions;
     public final CodeBlock code;
     public final CodeBlock defaultValue;
+    public final BlockStatementSpec body;
+
 
     private MethodSpec(Builder builder) {
         CodeBlock code = builder.code.build();
@@ -75,6 +67,7 @@ public final class MethodSpec {
         this.exceptions = Util.immutableList(builder.exceptions);
         this.defaultValue = builder.defaultValue;
         this.code = code;
+        this.body = builder.toBlockStatement();
     }
 
     public static Builder methodBuilder(String name) {
@@ -85,96 +78,12 @@ public final class MethodSpec {
         return new Builder(CONSTRUCTOR);
     }
 
-    /**
-     * Returns a new method spec builder that overrides {@code method}.
-     *
-     * <p>This will copy its visibility modifiers, type parameters, return type, name, parameters, and
-     * throws declarations. An {@link Override} annotation will be added.
-     *
-     * <p>Note that in JavaPoet 1.2 through 1.7 this method retained annotations from the method and
-     * parameters of the overridden method. Since JavaPoet 1.8 annotations must be added separately.
-     */
-    public static Builder overriding(ExecutableElement method) {
-        checkNotNull(method, "method == null");
-
-        Element enclosingClass = method.getEnclosingElement();
-        if (enclosingClass.getModifiers().contains(Modifier.FINAL)) {
-            throw new IllegalArgumentException("Cannot override method on final class " + enclosingClass);
-        }
-
-        Set<Modifier> modifiers = method.getModifiers();
-        if (modifiers.contains(Modifier.PRIVATE)
-            || modifiers.contains(Modifier.FINAL)
-            || modifiers.contains(Modifier.STATIC)) {
-            throw new IllegalArgumentException("cannot override method with modifiers: " + modifiers);
-        }
-
-        String methodName = method.getSimpleName().toString();
-        MethodSpec.Builder methodBuilder = methodBuilder(methodName);
-
-        methodBuilder.addAnnotation(Override.class);
-
-        modifiers = new LinkedHashSet<>(modifiers);
-        modifiers.remove(Modifier.ABSTRACT);
-        modifiers.remove(Modifier.DEFAULT);
-        methodBuilder.addModifiers(modifiers);
-
-        for (TypeParameterElement typeParameterElement : method.getTypeParameters()) {
-            TypeVariable var = (TypeVariable) typeParameterElement.asType();
-            methodBuilder.addTypeVariable(TypeVariableName.get(var));
-        }
-
-        methodBuilder.returns(TypeName.get(method.getReturnType()));
-        methodBuilder.addParameters(ParameterSpec.parametersOf(method));
-        methodBuilder.varargs(method.isVarArgs());
-
-        for (TypeMirror thrownType : method.getThrownTypes()) {
-            methodBuilder.addException(TypeName.get(thrownType));
-        }
-
-        return methodBuilder;
-    }
-
-    /**
-     * Returns a new method spec builder that overrides {@code method} as a member of {@code enclosing}. This will resolve type
-     * parameters: for example overriding {@link Comparable#compareTo} in a type that implements {@code Comparable<Movie>}, the
-     * {@code T} parameter will be resolved to {@code Movie}.
-     *
-     * <p>This will copy its visibility modifiers, type parameters, return type, name, parameters, and
-     * throws declarations. An {@link Override} annotation will be added.
-     *
-     * <p>Note that in JavaPoet 1.2 through 1.7 this method retained annotations from the method and
-     * parameters of the overridden method. Since JavaPoet 1.8 annotations must be added separately.
-     */
-    public static Builder overriding(
-        ExecutableElement method, DeclaredType enclosing, Types types) {
-        ExecutableType executableType = (ExecutableType) types.asMemberOf(enclosing, method);
-        List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
-        List<? extends TypeMirror> resolvedThrownTypes = executableType.getThrownTypes();
-        TypeMirror resolvedReturnType = executableType.getReturnType();
-
-        Builder builder = overriding(method);
-        builder.returns(TypeName.get(resolvedReturnType));
-        for (int i = 0, size = builder.parameters.size(); i < size; i++) {
-            ParameterSpec parameter = builder.parameters.get(i);
-            TypeName type = TypeName.get(resolvedParameterTypes.get(i));
-            builder.parameters.set(i, parameter.toBuilder(type, parameter.name).build());
-        }
-        builder.exceptions.clear();
-        for (int i = 0, size = resolvedThrownTypes.size(); i < size; i++) {
-            builder.addException(TypeName.get(resolvedThrownTypes.get(i)));
-        }
-
-        return builder;
-    }
-
     private boolean lastParameterIsArray(List<ParameterSpec> parameters) {
         return !parameters.isEmpty()
                && TypeName.asArray(parameters.get(parameters.size() - 1).type) != null;
     }
 
-    void emit(CodeWriter codeWriter, String enclosingName, Set<Modifier> implicitModifiers)
-        throws IOException {
+    void emit(CodeWriter codeWriter, String enclosingName, Set<Modifier> implicitModifiers) {
         codeWriter.emitJavadoc(javadocWithParameters());
         codeWriter.emitAnnotations(annotations, false);
         codeWriter.emitModifiers(modifiers, implicitModifiers);
@@ -202,11 +111,6 @@ public final class MethodSpec {
 
         codeWriter.emit(")");
 
-        if (defaultValue != null && !defaultValue.isEmpty()) {
-            codeWriter.emit(" default ");
-            codeWriter.emit(defaultValue);
-        }
-
         if (!exceptions.isEmpty()) {
             codeWriter.emitWrappingSpace().emit("throws");
             boolean firstException = true;
@@ -226,13 +130,7 @@ public final class MethodSpec {
             codeWriter.emit(code);
             codeWriter.emit(";\n");
         } else {
-            codeWriter.emit(" {\n");
-
-            codeWriter.indent();
-            codeWriter.emit(code, true);
-            codeWriter.unindent();
-
-            codeWriter.emit("}\n");
+            body.emit(codeWriter);
         }
         codeWriter.popTypeVariables(typeVariables);
     }
@@ -277,19 +175,16 @@ public final class MethodSpec {
 
     @Override
     public int hashCode() {
+        // XXX
         return toString().hashCode();
     }
 
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            CodeWriter codeWriter = new CodeWriter(out);
-            emit(codeWriter, "Constructor", Collections.emptySet());
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        CodeWriter codeWriter = new CodeWriter(out);
+        emit(codeWriter, "Constructor", Collections.emptySet());
+        return out.toString();
     }
 
     public Builder toBuilder() {
@@ -303,15 +198,20 @@ public final class MethodSpec {
         builder.exceptions.addAll(exceptions);
         builder.code.add(code);
         builder.varargs = varargs;
-        builder.defaultValue = defaultValue;
+        builder.contents.addAll(body.nodes());
         return builder;
     }
 
-    public static final class Builder {
-        public final List<TypeVariableName> typeVariables = new ArrayList<>();
-        public final List<AnnotationSpec> annotations = new ArrayList<>();
-        public final List<Modifier> modifiers = new ArrayList<>();
-        public final List<ParameterSpec> parameters = new ArrayList<>();
+    @Override
+    public void emit(CodeWriter writer) {
+        throw new UnsupportedOperationException();
+    }
+
+    public static final class Builder extends AbstractBlockBuilder<Builder, MethodSpec> {
+        private final List<TypeVariableName> typeVariables = new ArrayList<>();
+        private final List<AnnotationSpec> annotations = new ArrayList<>();
+        private final List<Modifier> modifiers = new ArrayList<>();
+        private final List<ParameterSpec> parameters = new ArrayList<>();
         private final CodeBlock.Builder javadoc = CodeBlock.builder();
         private final Set<TypeName> exceptions = new LinkedHashSet<>();
         private final CodeBlock.Builder code = CodeBlock.builder();
@@ -447,102 +347,6 @@ public final class MethodSpec {
 
         public Builder addException(Type exception) {
             return addException(TypeName.get(exception));
-        }
-
-        public Builder addCode(String format, Object... args) {
-            code.add(format, args);
-            return this;
-        }
-
-        public Builder addNamedCode(String format, Map<String, ?> args) {
-            code.addNamed(format, args);
-            return this;
-        }
-
-        public Builder addCode(CodeBlock codeBlock) {
-            code.add(codeBlock);
-            return this;
-        }
-
-        public Builder addComment(String format, Object... args) {
-            code.add("// " + format + "\n", args);
-            return this;
-        }
-
-        public Builder defaultValue(String format, Object... args) {
-            return defaultValue(CodeBlock.of(format, args));
-        }
-
-        public Builder defaultValue(CodeBlock codeBlock) {
-            checkState(this.defaultValue == null, "defaultValue was already set");
-            this.defaultValue = checkNotNull(codeBlock, "codeBlock == null");
-            return this;
-        }
-
-        /**
-         * @param controlFlow the control flow construct and its code, such as "if (foo == 5)". Shouldn't contain braces or
-         *                    newline characters.
-         */
-        public Builder beginControlFlow(String controlFlow, Object... args) {
-            code.beginControlFlow(controlFlow, args);
-            return this;
-        }
-
-        /**
-         * @param codeBlock the control flow construct and its code, such as "if (foo == 5)". Shouldn't contain braces or newline
-         *                  characters.
-         */
-        public Builder beginControlFlow(CodeBlock codeBlock) {
-            return beginControlFlow("$L", codeBlock);
-        }
-
-        /**
-         * @param controlFlow the control flow construct and its code, such as "else if (foo == 10)". Shouldn't contain braces or
-         *                    newline characters.
-         */
-        public Builder nextControlFlow(String controlFlow, Object... args) {
-            code.nextControlFlow(controlFlow, args);
-            return this;
-        }
-
-        /**
-         * @param codeBlock the control flow construct and its code, such as "else if (foo == 10)". Shouldn't contain braces or
-         *                  newline characters.
-         */
-        public Builder nextControlFlow(CodeBlock codeBlock) {
-            return nextControlFlow("$L", codeBlock);
-        }
-
-        public Builder endControlFlow() {
-            code.endControlFlow();
-            return this;
-        }
-
-        /**
-         * @param controlFlow the optional control flow construct and its code, such as "while(foo == 20)". Only used for
-         *                    "do/while" control flows.
-         */
-        public Builder endControlFlow(String controlFlow, Object... args) {
-            code.endControlFlow(controlFlow, args);
-            return this;
-        }
-
-        /**
-         * @param codeBlock the optional control flow construct and its code, such as "while(foo == 20)". Only used for "do/while"
-         *                  control flows.
-         */
-        public Builder endControlFlow(CodeBlock codeBlock) {
-            return endControlFlow("$L", codeBlock);
-        }
-
-        public Builder addStatement(String format, Object... args) {
-            code.addStatement(format, args);
-            return this;
-        }
-
-        public Builder addStatement(CodeBlock codeBlock) {
-            code.addStatement(codeBlock);
-            return this;
         }
 
         public MethodSpec build() {

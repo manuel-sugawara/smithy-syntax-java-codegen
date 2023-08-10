@@ -19,7 +19,6 @@ import static com.squareup.javapoet.Util.checkArgument;
 import static com.squareup.javapoet.Util.checkNotNull;
 import static com.squareup.javapoet.Util.checkState;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +64,7 @@ public final class FieldSpec {
         return modifiers.contains(modifier);
     }
 
-    void emit(CodeWriter codeWriter, Set<Modifier> implicitModifiers) throws IOException {
+    void emit(CodeWriter codeWriter, Set<Modifier> implicitModifiers) {
         codeWriter.emitJavadoc(javadoc);
         codeWriter.emitAnnotations(annotations, false);
         codeWriter.emitModifiers(modifiers, implicitModifiers);
@@ -99,13 +98,9 @@ public final class FieldSpec {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        try {
-            CodeWriter codeWriter = new CodeWriter(out);
-            emit(codeWriter, Collections.emptySet());
-            return out.toString();
-        } catch (IOException e) {
-            throw new AssertionError();
-        }
+        CodeWriter codeWriter = new CodeWriter(out);
+        emit(codeWriter, Collections.emptySet());
+        return out.toString();
     }
 
     public Builder toBuilder() {
