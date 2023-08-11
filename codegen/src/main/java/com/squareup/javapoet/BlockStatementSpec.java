@@ -17,7 +17,26 @@ public class BlockStatementSpec implements SyntaxNode {
 
     @Override
     public void emit(CodeWriter writer) {
-        throw new UnsupportedOperationException();
+        writer.emit(" {\n")
+              .indent();
+        for (var stmt : nodes) {
+            stmt.emit(writer);
+        }
+        writer
+            .unindent()
+            .emit("}\n");
+    }
+
+    @Override
+    public void emitInline(CodeWriter writer) {
+        writer.emit(" {\n")
+              .indent();
+        for (var stmt : nodes) {
+            stmt.emit(writer);
+        }
+        writer
+            .unindent()
+            .emit("} ");
     }
 
     public Collection<? extends SyntaxNode> nodes() {

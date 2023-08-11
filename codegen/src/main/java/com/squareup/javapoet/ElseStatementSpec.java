@@ -2,13 +2,28 @@ package com.squareup.javapoet;
 
 public class ElseStatementSpec implements SyntaxNode {
 
+    private final BlockStatementSpec body;
+
+    private ElseStatementSpec(BlockStatementSpec body) {
+        this.body = body;
+    }
+
     public static Builder builder(IfStatementSpec.Builder ifStatement) {
         return new Builder(ifStatement);
     }
 
     @Override
     public void emit(CodeWriter writer) {
-        throw new UnsupportedOperationException();
+        writer.emit("else ");
+        body.emit(writer);
+    }
+
+    @Override
+    public String toString() {
+        var out = new StringBuilder();
+        var writer = new CodeWriter(out);
+        this.emit(writer);
+        return out.toString();
     }
 
     public static final class Builder extends AbstractBlockBuilder<Builder, IfStatementSpec> {
@@ -20,7 +35,8 @@ public class ElseStatementSpec implements SyntaxNode {
 
         @Override
         public IfStatementSpec build() {
-            throw new UnsupportedOperationException();
+            ifStatement.addElse(new ElseStatementSpec(this.toBlockStatement()));
+            return ifStatement.build();
         }
     }
 }
