@@ -1,15 +1,19 @@
 package com.squareup.javapoet;
 
-public class ElseStatementSpec implements SyntaxNode {
+public final class ElseStatementSpec implements SyntaxNode {
 
-    private final BlockStatementSpec body;
+    private final SyntaxNode body;
 
-    private ElseStatementSpec(BlockStatementSpec body) {
+    ElseStatementSpec(SyntaxNode body) {
         this.body = body;
     }
 
-    public static Builder builder(IfStatementSpec.Builder ifStatement) {
-        return new Builder(ifStatement);
+    private ElseStatementSpec(Builder builder) {
+        this.body = builder.toBlockStatement();
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -26,17 +30,14 @@ public class ElseStatementSpec implements SyntaxNode {
         return out.toString();
     }
 
-    public static final class Builder extends AbstractBlockBuilder<Builder, IfStatementSpec> {
-        private IfStatementSpec.Builder ifStatement;
+    public static final class Builder extends AbstractBlockBuilder<Builder, ElseStatementSpec> {
 
-        Builder(IfStatementSpec.Builder ifStatement) {
-            this.ifStatement = ifStatement;
+        Builder() {
         }
 
         @Override
-        public IfStatementSpec build() {
-            ifStatement.addElse(new ElseStatementSpec(this.toBlockStatement()));
-            return ifStatement.build();
+        public ElseStatementSpec build() {
+            return new ElseStatementSpec(this);
         }
     }
 }

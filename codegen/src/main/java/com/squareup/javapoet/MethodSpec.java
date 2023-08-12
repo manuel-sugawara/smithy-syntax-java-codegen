@@ -130,6 +130,7 @@ public final class MethodSpec implements SyntaxNode {
             codeWriter.emit(code);
             codeWriter.emit(";\n");
         } else {
+            codeWriter.emit(" ");
             body.emit(codeWriter);
         }
         codeWriter.popTypeVariables(typeVariables);

@@ -15,6 +15,26 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
         state.push(this);
     }
 
+    static final String reportMissingClosing(AbstractBlockBuilder<?, ?> last) {
+        if (last instanceof IfStatementSpec.Builder ||
+            last instanceof IfStatementSpec.ElseIfBuilder ||
+            last instanceof ElseStatementSpec.Builder
+        ) {
+            return "missing endIfStatement()";
+        }
+        if (last instanceof TryStatementSpec.Builder ||
+            last instanceof CatchClauseSpec.Builder ||
+            last instanceof FinallyClauseSpec.Builder
+        ) {
+            return "missing endTryStatement()";
+        }
+        if (last instanceof ForStatementSpec.Builder) {
+            return "missing endForStatement()";
+        }
+
+        return "missing closing element of: " + last.getClass().getName();
+    }
+
     public B addStatement(String statement) {
         return addStatement(Statement.of(statement));
     }
@@ -37,17 +57,50 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     }
 
     public B beginIfStatement(String condition) {
-        return beginIfStatement(CodeSnippet.of(condition));
+        return beginIfStatement(Expression.of(condition));
+    }
+
+    public B beginIfStatement(String condition, Object... args) {
+        return beginIfStatement(Expression.of(condition, args));
+    }
+
+    public B elseIfStatement(SyntaxNode condition) {
+        var stmt = peekExpecting(IfStatementSpec.Builder.class, IfStatementSpec.ElseIfBuilder.class);
+        if (stmt instanceof IfStatementSpec.Builder ifStatement) {
+            state.push(ifStatement.addElseIf(condition));
+        } else {
+            state.pop();
+            var ifStatement = peekExpecting(IfStatementSpec.Builder.class);
+            state.push(ifStatement.addElseIf(condition));
+        }
+        return (B) this;
+    }
+
+    public B elseIfStatement(String condition) {
+        return elseIfStatement(Expression.of(condition));
+    }
+
+    public B elseIfStatement(String condition, Object... args) {
+        return elseIfStatement(Expression.of(condition, args));
     }
 
     public B elseStatement() {
-        var ifStatement = popExpecting(IfStatementSpec.Builder.class);
-        this.state.push(ElseStatementSpec.builder(ifStatement));
+        var stmt = peekExpecting(IfStatementSpec.Builder.class, IfStatementSpec.ElseIfBuilder.class);
+        if (stmt instanceof IfStatementSpec.ElseIfBuilder) {
+            state.pop();
+        }
+        var ifStatement = peekExpecting(IfStatementSpec.Builder.class);
+        state.push(ifStatement.addElse());
         return (B) this;
     }
 
     public B endIfStatement() {
-        var last = popExpecting(IfStatementSpec.Builder.class, ElseStatementSpec.Builder.class);
+        var last = popExpecting(IfStatementSpec.Builder.class,
+                                IfStatementSpec.ElseIfBuilder.class,
+                                ElseStatementSpec.Builder.class);
+        if (!(last instanceof IfStatementSpec.Builder)) {
+            last = popExpecting(IfStatementSpec.Builder.class);
+        }
         return addStatement(last.build());
     }
 
@@ -73,7 +126,7 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     }
 
     public B beginForStatement(String initializer) {
-        return beginForStatement(CodeSnippet.of(initializer));
+        return beginForStatement(Expression.of(initializer));
     }
 
     public B endForStatement() {
@@ -82,6 +135,12 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     }
 
     public B forStatement(String initializer, Consumer<AbstractBlockBuilder<B, T>> forBody) {
+        beginForStatement(initializer);
+        forBody.accept(this);
+        return endForStatement();
+    }
+
+    public B forStatement(SyntaxNode initializer, Consumer<AbstractBlockBuilder<B, T>> forBody) {
         beginForStatement(initializer);
         forBody.accept(this);
         return endForStatement();
@@ -110,6 +169,10 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
         return (B) this;
     }
 
+    public B beginCatchStatement(String format, Object... args) {
+        return beginCatchStatement(Expression.of(format, args));
+    }
+
     public B beginFinallyStatement() {
         var last = peekExpecting(TryStatementSpec.Builder.class, CatchClauseSpec.Builder.class);
         TryStatementSpec.Builder tryStatement;
@@ -134,6 +197,21 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     public B tryStatement(
         Consumer<AbstractBlockBuilder<B, T>> tryBody,
         SyntaxNode catchParameter,
+        Consumer<AbstractBlockBuilder<B, T>> catchBody,
+        Consumer<AbstractBlockBuilder<B, T>> finallyBody
+    ) {
+        beginTryStatement();
+        tryBody.accept(this);
+        beginCatchStatement(catchParameter);
+        catchBody.accept(this);
+        beginFinallyStatement();
+        finallyBody.accept(this);
+        return endTryStatement();
+    }
+
+    public B tryStatement(
+        Consumer<AbstractBlockBuilder<B, T>> tryBody,
+        SyntaxNode catchParameter,
         Consumer<AbstractBlockBuilder<B, T>> catchBody
     ) {
         beginTryStatement();
@@ -145,19 +223,31 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
 
     public B tryStatement(
         Consumer<AbstractBlockBuilder<B, T>> tryBody,
+        Consumer<AbstractBlockBuilder<B, T>> finallyBody
+    ) {
+        beginTryStatement();
+        tryBody.accept(this);
+        beginFinallyStatement();
+        finallyBody.accept(this);
+        return endTryStatement();
+    }
+
+    public B tryStatement(
+        Consumer<AbstractBlockBuilder<B, T>> tryBody,
         String catchParameter,
         Consumer<AbstractBlockBuilder<B, T>> catchBody
     ) {
-        return tryStatement(tryBody, CodeSnippet.of(catchParameter), catchBody);
+        return tryStatement(tryBody, Expression.of(catchParameter), catchBody);
     }
 
     // -- Utils
+    // TODO, Improve the wording, as "missing beginIfStatement()", instead of expecting class ...
     <E> E popExpecting(Class<E> clazz) {
         var last = state.pop();
         if (!clazz.isInstance(last)) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getSimpleName() + ", but got "
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getName() + ", but got "
                                             + "instead: " +
-                                            last.getClass().getSimpleName());
+                                            last.getClass().getName());
         }
         return (E) last;
     }
@@ -168,8 +258,8 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     ) {
         var last = state.pop();
         if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
-                                            " or " + clazz1.getSimpleName());
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getName() +
+                                            " or " + clazz1.getName());
         }
         return last;
     }
@@ -181,8 +271,8 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     ) {
         var last = state.pop();
         if (!(clazz0.isInstance(last) || clazz1.isInstance(last) || clazz2.isInstance(last))) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
-                                            ", but got instead: " + last.getClass().getSimpleName());
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getName() +
+                                            ", but got instead: " + last.getClass().getName());
         }
         return last;
     }
@@ -190,7 +280,7 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     <E> E peekExpecting(Class<E> clazz) {
         var last = state.peekFirst();
         if (!clazz.isInstance(last)) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getSimpleName());
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz.getName());
         }
         return (E) last;
     }
@@ -201,14 +291,22 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
     ) {
         var last = state.peekFirst();
         if (!(clazz0.isInstance(last) || clazz1.isInstance(last))) {
-            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getSimpleName() +
-                                            " or " + clazz1.getSimpleName() + ", but got instead: " +
-                                            last.getClass().getSimpleName());
+            throw new IllegalStateException("Expected to have a class on top instanceof " + clazz0.getName() +
+                                            " or " + clazz1.getName() + ", but got instead: " +
+                                            last.getClass().getName());
         }
         return last;
     }
 
     BlockStatementSpec toBlockStatement() {
+        var last = state.peekFirst();
+        if (last != this) {
+            var errors = new ArrayList<String>();
+            do {
+                errors.add(reportMissingClosing(state.pop()));
+            } while (state.peekFirst() != this);
+            throw new IllegalStateException("Unterminated state: " + String.join(",", errors));
+        }
         return BlockStatementSpec.builder()
                                  .addStatements(contents)
                                  .build();

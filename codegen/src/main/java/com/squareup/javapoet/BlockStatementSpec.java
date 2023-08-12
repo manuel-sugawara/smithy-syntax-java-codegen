@@ -17,26 +17,24 @@ public class BlockStatementSpec implements SyntaxNode {
 
     @Override
     public void emit(CodeWriter writer) {
-        writer.emit(" {\n")
-              .indent();
+        writer.emit("{\n");
+        writer.indent();
         for (var stmt : nodes) {
             stmt.emit(writer);
         }
-        writer
-            .unindent()
-            .emit("}\n");
+        writer.unindent();
+        writer.emit("}\n");
     }
 
     @Override
     public void emitInline(CodeWriter writer) {
-        writer.emit(" {\n")
-              .indent();
+        writer.emit("{\n");
+        writer.indent();
         for (var stmt : nodes) {
             stmt.emit(writer);
         }
-        writer
-            .unindent()
-            .emit("} ");
+        writer.unindent();
+        writer.emit("} ");
     }
 
     public Collection<? extends SyntaxNode> nodes() {

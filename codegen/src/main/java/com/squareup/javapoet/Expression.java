@@ -2,6 +2,7 @@ package com.squareup.javapoet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class Expression implements SyntaxNode {
     private final String format;
@@ -50,7 +51,7 @@ public final class Expression implements SyntaxNode {
         private final List<Object> args = new ArrayList<>();
 
         public Builder addCode(String format, Object... args) {
-            this.formats.add(format);
+            this.formats.add(Objects.requireNonNull(format));
             for (var arg : args) {
                 this.args.add(arg);
             }
