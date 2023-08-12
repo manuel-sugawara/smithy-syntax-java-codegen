@@ -240,6 +240,48 @@ abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T exte
         return tryStatement(tryBody, Expression.of(catchParameter), catchBody);
     }
 
+    // --- Legacy B/C control flow
+    public B beginControlFlow(SyntaxNode prefix) {
+        state.push(AbstractControlFlow.builder(prefix));
+        return (B) this;
+    }
+
+    public B beginControlFlow(String prefix) {
+        return beginControlFlow(Expression.of(prefix));
+    }
+
+    public B beginControlFlow(String prefix, Object... args) {
+        return beginControlFlow(Expression.of(prefix, args));
+    }
+
+    public B nextControlFlow(SyntaxNode prefix) {
+        var stmt = peekExpecting(AbstractControlFlow.Builder.class, AbstractControlFlow.NextControlFlowBuilder.class);
+        if (stmt instanceof AbstractControlFlow.Builder b) {
+            state.push(b.addNext(prefix));
+        } else {
+            state.pop();
+            var controlFlow = peekExpecting(AbstractControlFlow.Builder.class);
+            state.push(controlFlow.addNext(prefix));
+        }
+        return (B) this;
+    }
+
+    public B nextControlFlow(String prefix) {
+        return nextControlFlow(Expression.of(prefix));
+    }
+
+    public B nextControlFlow(String prefix, Object... args) {
+        return nextControlFlow(Expression.of(prefix, args));
+    }
+
+    public B endControlFlow() {
+        var last = popExpecting(AbstractControlFlow.Builder.class, AbstractControlFlow.NextControlFlowBuilder.class);
+        if (!(last instanceof AbstractControlFlow.Builder)) {
+            last = popExpecting(AbstractControlFlow.Builder.class);
+        }
+        return addStatement(last.build());
+    }
+
     // -- Utils
     // TODO, Improve the wording, as "missing beginIfStatement()", instead of expecting class ...
     <E> E popExpecting(Class<E> clazz) {

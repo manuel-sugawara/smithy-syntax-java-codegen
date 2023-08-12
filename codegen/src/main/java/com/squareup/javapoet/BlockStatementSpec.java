@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BlockStatementSpec implements SyntaxNode {
+public final class BlockStatementSpec implements SyntaxNode {
     private final List<SyntaxNode> nodes;
 
-    public BlockStatementSpec(Builder builder) {
+    private BlockStatementSpec(Builder builder) {
         this.nodes = List.copyOf(builder.nodes);
     }
 
