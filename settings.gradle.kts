@@ -1,7 +1,7 @@
 rootProject.name = "smithy-codegen-demo"
 
 // Include subpackages
-include(":codegen-jv")
+include(":poet")
 include(":codegen")
 include(":codegen-test")
 
@@ -12,4 +12,3 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-

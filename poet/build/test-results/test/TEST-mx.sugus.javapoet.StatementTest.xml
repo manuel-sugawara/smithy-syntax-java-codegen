@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mx.sugus.javapoet.StatementTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2023-08-12T14:22:46" hostname="Manuels-MacBook-Pro.local" time="0.004">
+  <properties/>
+  <testcase name="test0()" classname="mx.sugus.javapoet.StatementTest" time="0.001"/>
+  <testcase name="test1()" classname="mx.sugus.javapoet.StatementTest" time="0.002"/>
+  <system-out><![CDATA[===========================
+var foo = Math.min(x, y);
+
+===========================
+var result = numbers
+    .stream()
+    .map(x -> x * 2)
+    .filter(x -> (x % 2) == 0)
+    .collect(java.util.stream.Collectors.toList());
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
