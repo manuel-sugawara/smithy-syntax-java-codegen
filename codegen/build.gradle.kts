@@ -16,6 +16,7 @@ buildscript {
 }
 
 dependencies {
+    implementation(project(":poet"))
     implementation("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
     implementation("software.amazon.smithy:smithy-model:$smithyVersion")
     implementation("software.amazon.smithy:smithy-rules-engine:$smithyVersion")

@@ -7,17 +7,17 @@ import software.amazon.smithy.build.SmithyBuildPlugin;
 import software.amazon.smithy.codegen.core.directed.CodegenDirector;
 
 public class SmithyCodegenPlugin implements SmithyBuildPlugin {
-    private final CodegenDirector<CodegenWriter, JavaCodegenIntegration, JavaCodegenContext, JavaCodegenSettings> runner = new CodegenDirector<>();
+    private final CodegenDirector<CodegenWriter, JavaCodegenIntegration, JavaCodegenContext, JavaCodegenSettings> runner =
+        new CodegenDirector<>();
 
     @Override
     public String getName() {
-        return "demo-codegen";
+        return "smithy-java-codegen";
     }
 
     @Override
     public void execute(PluginContext pluginContext) {
         JavaCodegenSettings javaCodegenSettings = JavaCodegenSettings.from(pluginContext.getSettings());
-
         runner.directedCodegen(new JavaDirectedCodegen());
         runner.integrationClass(JavaCodegenIntegration.class);
         runner.fileManifest(pluginContext.getFileManifest());
