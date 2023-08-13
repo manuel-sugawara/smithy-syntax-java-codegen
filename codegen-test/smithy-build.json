@@ -6,7 +6,7 @@
         ]
     },
     "plugins": {
-        "demo-codegen": {
+        "smithy-java-codegen": {
             "service": "com.amazonaws.groundstation#GroundStation",
             "shortName": "GroundStation",
             "package": "com.example.groundstation",

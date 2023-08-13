@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unchecked")
-abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T extends SyntaxNode> {
+public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>, T extends SyntaxNode> {
     private final Deque<AbstractBlockBuilder<?, ?>> state = new ArrayDeque<>();
     protected List<SyntaxNode> contents = new ArrayList<>();
 

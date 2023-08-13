@@ -2,17 +2,20 @@ package mx.sugus.codegen.generators;
 
 import static mx.sugus.codegen.SymbolConstants.aggregateType;
 import static mx.sugus.codegen.SymbolConstants.concreteClassFor;
-import static mx.sugus.codegen.SymbolConstants.fromClassName;
 import static mx.sugus.codegen.SymbolConstants.isAggregate;
+import static mx.sugus.codegen.util.PoetUtils.toClassName;
 
 import java.util.NoSuchElementException;
 import javax.lang.model.element.Modifier;
-import mx.sugus.codegen.spec.AnnotationSpec;
-import mx.sugus.codegen.spec.FieldSpec;
-import mx.sugus.codegen.spec.MethodSpec;
-import mx.sugus.codegen.spec.TypeSpec;
 import mx.sugus.codegen.util.Naming;
+import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.codegen.writer.CodegenWriter;
+import mx.sugus.javapoet.AnnotationSpec;
+import mx.sugus.javapoet.ClassName;
+import mx.sugus.javapoet.FieldSpec;
+import mx.sugus.javapoet.MethodSpec;
+import mx.sugus.javapoet.TypeName;
+import mx.sugus.javapoet.TypeSpec;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
@@ -30,45 +33,45 @@ public record UnionGenerator(
 
     public void generate() {
         var spec = generateSpec();
-        delegator.useShapeWriter(shape, spec::emit);
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec));
     }
 
     public TypeSpec generateSpec() {
         var classBuilder = TypeSpec.classBuilder(symbol.getName())
                                    .addAnnotation(AnnotationSpec
-                                                      .builder(fromClassName("software.amazon.awssdk.annotations.Generated"))
-                                                      .addValue("mx.sugus.smithy.java:codegen")
+                                                      .builder(ClassName.get("software.amazon.awssdk.annotations", "Generated"))
+                                                      .addMember("value", "mx.sugus.smithy.java:codegen")
                                                       .build())
                                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         addFields(classBuilder);
         addConstructor(classBuilder);
         addAccessors(classBuilder);
         addTagAccessor(classBuilder);
-        classBuilder.addInnerType(generateMembersEnum());
-        classBuilder.addInnerType(Common.generateBuilderInterface(shape, symbolProvider));
-        classBuilder.addInnerType(generateBuilderClass());
+        classBuilder.addType(generateMembersEnum());
+        classBuilder.addType(Common.generateBuilderInterface(shape, symbolProvider));
+        classBuilder.addType(generateBuilderClass());
         return classBuilder.build();
     }
 
-    private void addFields(TypeSpec.ClassBuilder builder) {
-        builder.addField(FieldSpec.builder("Tag", "memberTag")
+    private void addFields(TypeSpec.Builder builder) {
+        builder.addField(FieldSpec.builder(ClassName.get("", "Tag"), "memberTag")
                                   .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                                   .build())
-               .addField(FieldSpec.builder("Object", "value")
+               .addField(FieldSpec.builder(TypeName.OBJECT, "value")
                                   .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                                   .build());
     }
 
-    private void addConstructor(TypeSpec.ClassBuilder builder) {
+    private void addConstructor(TypeSpec.Builder builder) {
         builder.addMethod(MethodSpec.constructorBuilder()
                                     .addModifiers(Modifier.PRIVATE)
-                                    .addParameter("Builder", "builder")
+                                    .addParameter(ClassName.get("", "Builder"), "builder")
                                     .addStatement("this.memberTag = builder.memberTag")
                                     .addStatement("this.value = builder.value")
                                     .build());
     }
 
-    private void addAccessors(TypeSpec.ClassBuilder builder) {
+    private void addAccessors(TypeSpec.Builder builder) {
         for (var member : shape.members()) {
             builder.addMethod(generateAccessorForMember(member));
         }
@@ -79,17 +82,17 @@ public record UnionGenerator(
         var builder = Common.generateStubForClassAccessor(member, symbolProvider);
         var tagValue = "Tag." + Naming.screamCase(member.getMemberName());
         builder.ifStatement("memberTag == " + tagValue,
-                            ifBody -> ifBody.addStatement("return ($T) value", type));
+                            ifBody -> ifBody.addStatement("return ($T) value", toClassName(type)));
         builder.addStatement("throw new $T(String.format($S, $L, this.memberTag))",
                              NoSuchElementException.class,
                              "Member of type %s was not set, instead the value is tagged with %s", tagValue);
         return builder.build();
     }
 
-    private void addTagAccessor(TypeSpec.ClassBuilder builder) {
+    private void addTagAccessor(TypeSpec.Builder builder) {
         builder.addMethod(MethodSpec.methodBuilder("memberTag")
                                     .addModifiers(Modifier.PUBLIC)
-                                    .returns("Tag")
+                                    .returns(ClassName.get("", "Tag"))
                                     .addStatement("return memberTag")
                                     .build());
     }
@@ -97,7 +100,7 @@ public record UnionGenerator(
     TypeSpec generateMembersEnum() {
         var b = TypeSpec.enumBuilder("Tag");
         shape.getAllMembers().forEach((name, value) -> {
-            b.addEnumConstant(Naming.screamCase(name), name);
+            //b.addEnumConstant(Naming.screamCase(name), name);
         });
         b.addField(EnumGenerator.generateValueField());
         b.addMethod(EnumGenerator.generateConstructor());
@@ -107,7 +110,7 @@ public record UnionGenerator(
 
     TypeSpec generateBuilderClass() {
         var builderClass = TypeSpec.classBuilder("BuilderImpl")
-                                   .addSuperinterface("Builder")
+                                   .addSuperinterface(ClassName.get("", "Builder"))
                                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         generateBuilderFields(builderClass);
         builderClass.addMethod(generateBuilderConstructor());
@@ -119,11 +122,11 @@ public record UnionGenerator(
         return builderClass.build();
     }
 
-    void generateBuilderFields(TypeSpec.ClassBuilder builderClass) {
-        builderClass.addField(FieldSpec.builder(fromClassName("Tag"), "memberTag")
+    void generateBuilderFields(TypeSpec.Builder builderClass) {
+        builderClass.addField(FieldSpec.builder(ClassName.get("", "Tag"), "memberTag")
                                        .addModifiers(Modifier.PRIVATE)
                                        .build());
-        builderClass.addField(FieldSpec.builder(fromClassName("Object"), "value")
+        builderClass.addField(FieldSpec.builder(TypeName.OBJECT, "value")
                                        .addModifiers(Modifier.PRIVATE)
                                        .build());
     }
@@ -146,13 +149,13 @@ public record UnionGenerator(
     MethodSpec generateBuilderCopyConstructor() {
         var builder = MethodSpec.constructorBuilder()
                                 .addModifiers(Modifier.PRIVATE)
-                                .addParameter(symbol, "that");
+                                .addParameter(toClassName(symbol), "that");
         builder.addStatement("this.memberTag = that.memberTag");
         builder.addStatement("this.value = that.value");
         return builder.build();
     }
 
-    void generateBuilderSettersForMember(MemberShape member, TypeSpec.ClassBuilder builderClass) {
+    void generateBuilderSettersForMember(MemberShape member, TypeSpec.Builder builderClass) {
         var type = symbolProvider.toSymbol(member);
         var name = symbolProvider.toMemberName(member);
         switch (aggregateType(type)) {
@@ -182,21 +185,21 @@ public record UnionGenerator(
 
     MethodSpec.Builder stubForMemberSetter(String name, Symbol type) {
         return baseStubForMemberSetter(name)
-            .addParameter(type, name)
+            .addParameter(toClassName(type), name)
             .addJavadoc("Sets the value for the member $L", name);
     }
 
     MethodSpec.Builder baseStubForMemberSetter(String name) {
         return MethodSpec.methodBuilder(name)
                          .addModifiers(Modifier.PUBLIC)
-                         .returns("Builder");
+                         .returns(ClassName.get("", "Builder"));
     }
 
     MethodSpec generateBuildMethod() {
         return MethodSpec.methodBuilder("build")
                          .addModifiers(Modifier.PUBLIC)
-                         .returns(symbol)
-                         .addStatement("return new $T(this)", symbol)
+                         .returns(toClassName(symbol))
+                         .addStatement("return new $T(this)", toClassName(symbol))
                          .build();
     }
 

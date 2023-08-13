@@ -27,7 +27,7 @@ class IntEnumGeneratorTest {
             new IntEnumGenerator(null, symbol, shape, mock(SymbolProvider.class), mock(WriterDelegator.class))
                 .generateType();
         var writer = new CodegenWriter("mx.sugus.example");
-        spec.emit(writer);
+        //spec.emit(writer);
         System.out.println(writer.toString());
 
     }

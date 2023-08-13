@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mx.sugus.javapoet.MethodSpecTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-08-13T16:10:03" hostname="Manuels-MacBook-Pro.local" time="0.003">
+  <properties/>
+  <testcase name="test0()" classname="mx.sugus.javapoet.MethodSpecTest" time="0.003"/>
+  <system-out><![CDATA[=========================
+public java.lang.String toString() {
+  if (value == null) {
+    if (anotherValue != null) {
+      return anotherValue;
+    }
+    return "value is null";
+  } else {
+    return value + "Value IS NOT null";
+  }
+}
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

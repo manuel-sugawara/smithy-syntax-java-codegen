@@ -2,17 +2,19 @@ package mx.sugus.codegen.generators;
 
 import static mx.sugus.codegen.JavaSymbolProvider.mapStringToV;
 import static mx.sugus.codegen.SymbolConstants.fromClassName;
+import static mx.sugus.codegen.util.PoetUtils.toClassName;
 
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.JavaSymbolProvider;
-import mx.sugus.codegen.spec.AnnotationSpec;
-import mx.sugus.codegen.spec.FieldSpec;
-import mx.sugus.codegen.spec.MethodSpec;
-import mx.sugus.codegen.spec.ParameterSpec;
-import mx.sugus.codegen.spec.TypeSpec;
-import mx.sugus.codegen.spec.emitters.Emitters;
 import mx.sugus.codegen.util.Naming;
+import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.codegen.writer.CodegenWriter;
+import mx.sugus.javapoet.AnnotationSpec;
+import mx.sugus.javapoet.FieldSpec;
+import mx.sugus.javapoet.MethodSpec;
+import mx.sugus.javapoet.ParameterSpec;
+import mx.sugus.javapoet.TypeName;
+import mx.sugus.javapoet.TypeSpec;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
@@ -31,7 +33,7 @@ public record EnumGenerator(
     static Symbol ENUM_UTILS = fromClassName("software.amazon.awssdk.utils.internal.EnumUtils");
 
     static FieldSpec generateValueField() {
-        return FieldSpec.builder(JavaSymbolProvider.STRING, "value")
+        return FieldSpec.builder(TypeName.BOOLEAN, "value")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build();
     }
@@ -39,7 +41,7 @@ public record EnumGenerator(
     static MethodSpec generateConstructor() {
         return MethodSpec.constructorBuilder()
                          .addModifiers(Modifier.PRIVATE)
-                         .addParameter(JavaSymbolProvider.STRING, "value")
+                         .addParameter(toClassName(JavaSymbolProvider.STRING), "value")
                          .addStatement("this.value = value")
                          .build();
     }
@@ -56,8 +58,8 @@ public record EnumGenerator(
     public void generate() {
         var b = TypeSpec.enumBuilder(symbol.getName())
                         .addAnnotation(AnnotationSpec
-                                           .builder(fromClassName("software.amazon.awssdk.annotations.Generated"))
-                                           .addValue("mx.sugus.smithy.java:codegen")
+                                           .builder(toClassName(fromClassName("software.amazon.awssdk.annotations.Generated")))
+                                           .addMember("value", "mx.sugus.smithy.java:codegen")
                                            .build())
                         .addModifiers(Modifier.PUBLIC);
         shape.getEnumValues().size();
@@ -69,33 +71,34 @@ public record EnumGenerator(
         b.addMethod(generateToString());
 
         var spec = b.build();
-        delegator.useShapeWriter(shape, spec::emit);
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec));
     }
 
-    void generateValueMapField(TypeSpec.EnumBuilder builder) {
+    void generateValueMapField(TypeSpec.Builder builder) {
         if (shape.getEnumValues().size() > USE_MAP_THRESHOLD) {
-            builder.addField(FieldSpec.builder(mapStringToV(symbol), "VALUE_MAP")
+            builder.addField(FieldSpec.builder(toClassName(mapStringToV(symbol)), "VALUE_MAP")
                                       .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                                      .initializer("$1T.uniqueIndex($2T.class, $2T::toString)", ENUM_UTILS, symbol)
+                                      .initializer("$1T.uniqueIndex($2T.class, $2T::toString)", toClassName(ENUM_UTILS),
+                                                   toClassName(symbol))
                                       .build());
         }
     }
 
-    void generateConstants(TypeSpec.EnumBuilder enumBuilder) {
+    void generateConstants(TypeSpec.Builder enumBuilder) {
         shape.getEnumValues().forEach((name, value) -> {
-            enumBuilder.addEnumConstant(Naming.screamCase(name), value);
+            enumBuilder.addEnumConstant(Naming.screamCase(name));
         });
-        enumBuilder.addEnumConstant("UNKNOWN_TO_SDK_VERSION", Emitters.literalInline("(null)"));
+        enumBuilder.addEnumConstant("UNKNOWN_TO_SDK_VERSION"); //, Emitters.literalInline("(null)"));
     }
 
     MethodSpec generateFromValueUsingMap() {
         var b = MethodSpec.methodBuilder("fromValue")
                           .addJavadoc("Use this in place of valueOf to convert the raw string returned by the service into the "
                                       + "enum value.")
-                          .returns(symbol)
+                          .returns(toClassName(symbol))
                           .addModifiers(Modifier.STATIC, Modifier.PUBLIC)
                           .addParameter(ParameterSpec.builder(String.class, "value")
-                                                     .addJavadoc("The string literal to convert to $T", symbol)
+                                                     .addJavadoc("The string literal to convert to $T", toClassName(symbol))
                                                      .build());
 
         if (shape.getEnumValues().size() > USE_MAP_THRESHOLD) {
@@ -103,7 +106,8 @@ public record EnumGenerator(
                     .addStatement("return VALUE_MAP.getOrDefault(value, UNKNOWN_TO_SDK_VERSION)")
                     .build();
         }
-        b.startControlFlow("switch(value)");
+        b.beginControlFlow("switch(value)");
+        /*
         shape.getEnumValues().forEach((name, value) -> {
             b.addCodeEmitter(Emitters.direct(w -> {
                 w.write("case $S:", value)
@@ -116,6 +120,8 @@ public record EnumGenerator(
                                .indent()
                                .writeWithNoFormatting("return UNKNOWN_TO_SDK_VERSION;")
                                .dedent());
+
+         */
         b.endControlFlow();
         return b.build();
     }

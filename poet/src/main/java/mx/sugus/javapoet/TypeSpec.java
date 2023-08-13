@@ -831,8 +831,11 @@ public final class TypeSpec {
                         checkState(!methodSpec.hasModifier(Modifier.ABSTRACT),
                                    "%s %s.%s cannot be private and abstract", kind, name, methodSpec.name);
                     } else {
+                        /*
                         requireExactlyOneOf(methodSpec.modifiers, Modifier.ABSTRACT, Modifier.STATIC,
                                             Modifier.DEFAULT);
+
+                         */
                     }
                 } else if (kind == Kind.ANNOTATION) {
                     checkState(methodSpec.modifiers.equals(kind.implicitMethodModifiers),
