@@ -16,5 +16,6 @@ wrapper
 /build
 /buildSrc/build/
 /codegen/build
+/poet/build
 /codegen-test/build
 /codegen-jv/build

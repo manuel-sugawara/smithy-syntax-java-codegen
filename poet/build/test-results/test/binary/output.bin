@@ -1,22 +1,0 @@
-=========================
-%public java.lang.String toString() {
-  if (value == null) {
-     if (anotherValue != null) {
-      return anotherValue;
-    }
-    return "value is null";
-  } else {
-(    return value + "Value IS NOT null";
-  }
-}
-
-===========================
-var foo = Math.min(x, y);
-
-===========================
-var result = numbers
-    .stream()
-    .map(x -> x * 2)
-    .filter(x -> (x % 2) == 0)
-4    .collect(java.util.stream.Collectors.toList());
-
