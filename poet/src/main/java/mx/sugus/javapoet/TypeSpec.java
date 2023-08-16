@@ -260,7 +260,6 @@ public final class TypeSpec {
                 }
 
                 codeWriter.popType();
-
                 codeWriter.emit(" {\n");
             }
 

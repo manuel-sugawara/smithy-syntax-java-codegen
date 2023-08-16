@@ -15,7 +15,7 @@ public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>,
         state.push(this);
     }
 
-    static final String reportMissingClosing(AbstractBlockBuilder<?, ?> last) {
+    static String reportMissingClosing(AbstractBlockBuilder<?, ?> last) {
         if (last instanceof IfStatementSpec.Builder ||
             last instanceof IfStatementSpec.ElseIfBuilder ||
             last instanceof ElseStatementSpec.Builder
@@ -245,17 +245,21 @@ public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>,
     }
 
     public B beginSwitchStatement(SyntaxNode expression) {
-        state.push(SwitchStatement.builder(expression));
+        state.push(SwitchStatementSpec.builder(expression));
         return (B) this;
     }
 
+    public B beginSwitchStatement(String format, Object... args) {
+        return beginSwitchStatement(Expression.of(format, args));
+    }
+
     public B nextSwitchCase(SyntaxNode label) {
-        var last = peekExpecting(SwitchStatement.Builder.class, SwitchLabelBlock.Builder.class);
-        if (last instanceof SwitchLabelBlock.Builder) {
-            var prevCase = popExpecting(SwitchLabelBlock.Builder.class);
+        var last = peekExpecting(SwitchStatementSpec.Builder.class, SwitchLabelBlockSpec.Builder.class);
+        if (last instanceof SwitchLabelBlockSpec.Builder) {
+            var prevCase = popExpecting(SwitchLabelBlockSpec.Builder.class);
             addStatement(prevCase.build());
         }
-        state.push(SwitchLabelBlock.builder(label));
+        state.push(SwitchLabelBlockSpec.builder(label));
         return (B) this;
     }
 
@@ -268,10 +272,10 @@ public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>,
     }
 
     public B endSwitchStatement() {
-        var last = popExpecting(SwitchStatement.Builder.class, SwitchLabelBlock.Builder.class);
-        if (last instanceof SwitchLabelBlock.Builder) {
+        var last = popExpecting(SwitchStatementSpec.Builder.class, SwitchLabelBlockSpec.Builder.class);
+        if (last instanceof SwitchLabelBlockSpec.Builder) {
             addStatement(last.build());
-            last = popExpecting(SwitchStatement.Builder.class);
+            last = popExpecting(SwitchStatementSpec.Builder.class);
         }
         return addStatement(last.build());
     }

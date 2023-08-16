@@ -5,7 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 import org.junit.jupiter.api.Test;
 
-class SwitchStatementTest {
+class SwitchStatementSpecTest {
 
     @Test
     public void test0() {

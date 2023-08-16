@@ -1,13 +1,12 @@
 package mx.sugus.javapoet;
 
 import java.util.List;
-import java.util.Objects;
 
-public class SwitchLabelBlock implements SyntaxNode {
+public final class SwitchLabelBlockSpec implements SyntaxNode {
     private final SyntaxNode label;
     private final List<SyntaxNode> nodes;
 
-    private SwitchLabelBlock(Builder builder) {
+    private SwitchLabelBlockSpec(Builder builder) {
         this.label = builder.label;
         this.nodes = List.copyOf(builder.contents);
     }
@@ -40,7 +39,7 @@ public class SwitchLabelBlock implements SyntaxNode {
         return out.toString();
     }
 
-    public static class Builder extends AbstractBlockBuilder<Builder, SwitchLabelBlock> {
+    public static class Builder extends AbstractBlockBuilder<Builder, SwitchLabelBlockSpec> {
         private SyntaxNode label;
 
         public Builder(SyntaxNode label) {
@@ -48,8 +47,8 @@ public class SwitchLabelBlock implements SyntaxNode {
         }
 
         @Override
-        public SwitchLabelBlock build() {
-            return new SwitchLabelBlock(this);
+        public SwitchLabelBlockSpec build() {
+            return new SwitchLabelBlockSpec(this);
         }
     }
 }

@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class SwitchStatement implements SyntaxNode {
-
+public final class SwitchStatementSpec implements SyntaxNode {
     private final SyntaxNode expression;
-    private final List<SwitchLabelBlock> labels;
-    private SwitchStatement(Builder builder) {
+    private final List<SwitchLabelBlockSpec> labels;
+
+    private SwitchStatementSpec(Builder builder) {
         this.expression = Objects.requireNonNull(builder.expression, "expression");
         labels = new ArrayList<>(builder.contents.size());
         for (var node : builder.contents) {
-            if (node instanceof SwitchLabelBlock label) {
+            if (node instanceof SwitchLabelBlockSpec label) {
                 labels.add(label);
             } else {
                 throw new IllegalStateException("switch statements can only have labels, got instead: "
@@ -46,15 +46,16 @@ public final class SwitchStatement implements SyntaxNode {
         return out.toString();
     }
 
-    public static final class Builder extends AbstractBlockBuilder<Builder, SwitchStatement> {
+    public static final class Builder extends AbstractBlockBuilder<Builder, SwitchStatementSpec> {
         private SyntaxNode expression;
+
         Builder(SyntaxNode expression) {
             this.expression = expression;
         }
 
         @Override
-        public SwitchStatement build() {
-            return new SwitchStatement(this);
+        public SwitchStatementSpec build() {
+            return new SwitchStatementSpec(this);
         }
     }
 }
