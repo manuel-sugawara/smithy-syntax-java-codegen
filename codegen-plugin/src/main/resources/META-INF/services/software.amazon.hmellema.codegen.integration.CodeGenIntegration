@@ -1,0 +1,3 @@
+mx.sugus.codegen.integration.retype.ReTypeIntegration
+mx.sugus.codegen.integration.core.CoreIntegration
+mx.sugus.codegen.integration.fork.ForkIntegration

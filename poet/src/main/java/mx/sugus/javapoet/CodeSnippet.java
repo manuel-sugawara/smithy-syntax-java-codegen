@@ -162,7 +162,7 @@ public final class CodeSnippet implements SyntaxNode {
 
     @Override
     public void emit(CodeWriter writer) {
-        throw new UnsupportedOperationException();
+        writer.emit(this);
     }
 
     public static final class Builder {

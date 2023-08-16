@@ -3,7 +3,7 @@ package mx.sugus.codegen.generators;
 import static mx.sugus.codegen.SymbolConstants.aggregateType;
 import static mx.sugus.codegen.SymbolConstants.concreteClassFor;
 import static mx.sugus.codegen.SymbolConstants.isAggregate;
-import static mx.sugus.codegen.util.PoetUtils.toClassName;
+import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import java.util.NoSuchElementException;
 import javax.lang.model.element.Modifier;
@@ -33,7 +33,7 @@ public record UnionGenerator(
 
     public void generate() {
         var spec = generateSpec();
-        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec));
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec, symbol.getNamespace()));
     }
 
     public TypeSpec generateSpec() {
@@ -82,7 +82,7 @@ public record UnionGenerator(
         var builder = Common.generateStubForClassAccessor(member, symbolProvider);
         var tagValue = "Tag." + Naming.screamCase(member.getMemberName());
         builder.ifStatement("memberTag == " + tagValue,
-                            ifBody -> ifBody.addStatement("return ($T) value", toClassName(type)));
+                            ifBody -> ifBody.addStatement("return ($T) value", toTypeName(type)));
         builder.addStatement("throw new $T(String.format($S, $L, this.memberTag))",
                              NoSuchElementException.class,
                              "Member of type %s was not set, instead the value is tagged with %s", tagValue);
@@ -149,7 +149,7 @@ public record UnionGenerator(
     MethodSpec generateBuilderCopyConstructor() {
         var builder = MethodSpec.constructorBuilder()
                                 .addModifiers(Modifier.PRIVATE)
-                                .addParameter(toClassName(symbol), "that");
+                                .addParameter(toTypeName(symbol), "that");
         builder.addStatement("this.memberTag = that.memberTag");
         builder.addStatement("this.value = that.value");
         return builder.build();
@@ -185,7 +185,7 @@ public record UnionGenerator(
 
     MethodSpec.Builder stubForMemberSetter(String name, Symbol type) {
         return baseStubForMemberSetter(name)
-            .addParameter(toClassName(type), name)
+            .addParameter(toTypeName(type), name)
             .addJavadoc("Sets the value for the member $L", name);
     }
 
@@ -198,8 +198,8 @@ public record UnionGenerator(
     MethodSpec generateBuildMethod() {
         return MethodSpec.methodBuilder("build")
                          .addModifiers(Modifier.PUBLIC)
-                         .returns(toClassName(symbol))
-                         .addStatement("return new $T(this)", toClassName(symbol))
+                         .returns(toTypeName(symbol))
+                         .addStatement("return new $T(this)", toTypeName(symbol))
                          .build();
     }
 

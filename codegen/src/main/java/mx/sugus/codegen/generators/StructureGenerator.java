@@ -3,7 +3,7 @@ package mx.sugus.codegen.generators;
 import static mx.sugus.codegen.SymbolConstants.aggregateType;
 import static mx.sugus.codegen.SymbolConstants.concreteClassFor;
 import static mx.sugus.codegen.SymbolConstants.isAggregate;
-import static mx.sugus.codegen.util.PoetUtils.toClassName;
+import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import java.util.Collections;
 import javax.lang.model.element.Modifier;
@@ -31,14 +31,19 @@ public record StructureGenerator(
 
     public void generate() {
         var spec = generateSpec();
-        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec));
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec, symbol.getNamespace()));
+    }
+
+    public void generate2() {
+        var spec = generateSpec();
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec, symbol.getNamespace()));
     }
 
     public TypeSpec generateSpec() {
         var classBuilder = TypeSpec.classBuilder(symbol.getName())
                                    .addAnnotation(AnnotationSpec
                                                       .builder(ClassName.get("software.amazon.awssdk.annotations", "Generated"))
-                                                      .addMember("value", "mx.sugus.smithy.java:codegen")
+                                                      .addMember("value", "$S", "mx.sugus.smithy.java:codegen")
                                                       .build())
                                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         generateFields(classBuilder);
@@ -62,7 +67,7 @@ public record StructureGenerator(
             if (isAggregate(type)) {
                 var toUnmodifiable = toUnmodifiableCollection(type);
                 builder.addStatement("this.$1L = $2T.$3L(new $4T<>(builder.$1L))",
-                                     name, Collections.class, toUnmodifiable, toClassName(concreteClassFor(type)));
+                                     name, Collections.class, toUnmodifiable, toTypeName(concreteClassFor(type)));
             } else {
                 builder.addStatement("this.$1L = builder.$1L", name);
             }
@@ -74,7 +79,7 @@ public record StructureGenerator(
         for (var member : shape.members()) {
             var name = symbolProvider.toMemberName(member);
             var type = symbolProvider.toSymbol(member);
-            builder.addField(FieldSpec.builder(toClassName(type), name)
+            builder.addField(FieldSpec.builder(toTypeName(type), name)
                                       .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                                       .build());
         }

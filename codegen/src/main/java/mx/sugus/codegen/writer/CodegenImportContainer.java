@@ -6,11 +6,11 @@ import java.util.TreeSet;
 import software.amazon.smithy.codegen.core.ImportContainer;
 import software.amazon.smithy.codegen.core.Symbol;
 
-public class CodeGenImportContainer implements ImportContainer {
+public class CodegenImportContainer implements ImportContainer {
     private final String packagename;
     private final Set<Symbol> imports;
 
-    CodeGenImportContainer(String packagename) {
+    CodegenImportContainer(String packagename) {
         this.packagename = packagename;
         this.imports = new TreeSet<>(Comparator.comparing(Symbol::getFullName));
     }

@@ -2,6 +2,7 @@ rootProject.name = "smithy-codegen-demo"
 
 // Include subpackages
 include(":poet")
+include(":codegen-plugin")
 include(":codegen")
 include(":codegen-test")
 

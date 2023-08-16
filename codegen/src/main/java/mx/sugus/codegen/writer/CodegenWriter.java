@@ -10,7 +10,7 @@ import software.amazon.smithy.utils.StringUtils;
 /**
  *
  */
-public class CodegenWriter extends SymbolWriter<CodegenWriter, CodeGenImportContainer> {
+public class CodegenWriter extends SymbolWriter<CodegenWriter, CodegenImportContainer> {
     private static final int RIGHT_MARGIN = 130;
     private static final int MIN_LINE_LENGTH = 30;
 
@@ -18,7 +18,7 @@ public class CodegenWriter extends SymbolWriter<CodegenWriter, CodeGenImportCont
     private boolean hasPreviousSection = false;
 
     public CodegenWriter(String packageName) {
-        super(new CodeGenImportContainer(packageName));
+        super(new CodegenImportContainer(packageName));
         this.packageName = packageName;
         putFormatter('T', this::formatJavaType);
     }
@@ -114,10 +114,6 @@ public class CodegenWriter extends SymbolWriter<CodegenWriter, CodeGenImportCont
         var header = fileHeader();
         if (!header.isEmpty()) {
             buf.append(header).append('\n');
-        }
-        var packageDeclaration = packageDeclaration();
-        if (!packageDeclaration.isEmpty()) {
-            buf.append(packageDeclaration).append('\n');
         }
         var imports = getImportContainer().toString();
         if (!imports.isEmpty()) {

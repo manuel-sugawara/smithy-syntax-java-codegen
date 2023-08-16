@@ -1,11 +1,9 @@
 package mx.sugus.codegen.generators;
 
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PUBLIC;
 import static mx.sugus.codegen.SymbolConstants.aggregateType;
 import static mx.sugus.codegen.SymbolConstants.concreteClassFor;
 import static mx.sugus.codegen.SymbolConstants.isAggregate;
-import static mx.sugus.codegen.util.PoetUtils.toClassName;
+import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.SensitiveKnowledgeIndex;
@@ -18,7 +16,6 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.utils.StringUtils;
 
 public final class Common {
@@ -32,7 +29,7 @@ public final class Common {
         var type = symbolProvider.toSymbol(member);
         return MethodSpec.methodBuilder(name)
                          .addModifiers(Modifier.PUBLIC)
-                         .returns(toClassName(type))
+                         .returns(toTypeName(type))
                          /*.addJavadoc(member.getTrait(DocumentationTrait.class)
                                            .map(DocumentationTrait::getValue)
                                            .orElse(null))
@@ -90,28 +87,28 @@ public final class Common {
             var type = symbolProvider.toSymbol(member);
             var name = symbolProvider.toMemberName(member);
             interfaceBuilder.addMethod(stubForBuilderFluentMemberSetter(name, type)
-
+                                           .addModifiers(Modifier.ABSTRACT)
                                            .build());
         }
     }
 
     static MethodSpec.Builder stubForBuilderFluentMemberSetter(String name, Symbol type) {
         return baseStubForBuilderFluentMemberSetter(name)
-            .addParameter(toClassName(type), name)
+            .addModifiers(Modifier.PUBLIC)
+            .addParameter(toTypeName(type), name)
             .addJavadoc("Sets the value for the member $L", name);
     }
 
     static MethodSpec.Builder baseStubForBuilderFluentMemberSetter(String name) {
         return MethodSpec.methodBuilder(name)
-                         .addModifiers(Modifier.PUBLIC)
                          .returns(ClassName.get("", "Builder"));
     }
 
     static MethodSpec generateBuilderInterfaceBuildMethod(Symbol symbol) {
         return MethodSpec.methodBuilder("build")
-                         .addModifiers(ABSTRACT, PUBLIC)
-                         .returns(toClassName(symbol))
-                         .addJavadoc("Creates a new instance of {@code $T}", toClassName(symbol))
+                         .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
+                         .returns(toTypeName(symbol))
+                         .addJavadoc("Creates a new instance of {@code $T}", toTypeName(symbol))
                          .build();
     }
 
@@ -119,8 +116,8 @@ public final class Common {
     public static MethodSpec generateBuildMethod(Symbol buildable) {
         return MethodSpec.methodBuilder("build")
                          .addModifiers(Modifier.PUBLIC)
-                         .returns(toClassName(buildable))
-                         .addStatement("return new $T(this)", toClassName(buildable))
+                         .returns(toTypeName(buildable))
+                         .addStatement("return new $T(this)", toTypeName(buildable))
                          .build();
     }
 
@@ -146,16 +143,16 @@ public final class Common {
     public static MethodSpec generateToBuilderMethod(Symbol builder, Symbol builderImpl) {
         return MethodSpec.methodBuilder("toBuilder")
                          .addModifiers(Modifier.PUBLIC)
-                         .returns(toClassName(builder))
-                         .addStatement("return new $T(this)", toClassName(builderImpl))
+                         .returns(toTypeName(builder))
+                         .addStatement("return new $T(this)", toTypeName(builderImpl))
                          .build();
     }
 
     public static MethodSpec generateBuilderMethod(Symbol builder, Symbol builderImpl) {
         return MethodSpec.methodBuilder("builder")
                          .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                         .returns(toClassName(builder))
-                         .addStatement("return new $T()", toClassName(builderImpl))
+                         .returns(toTypeName(builder))
+                         .addStatement("return new $T()", toTypeName(builderImpl))
                          .build();
     }
 
@@ -179,7 +176,7 @@ public final class Common {
         for (var member : shape.members()) {
             var type = symbolProvider.toSymbol(member);
             var name = symbolProvider.toMemberName(member);
-            builderClass.addField(FieldSpec.builder(toClassName(type), name)
+            builderClass.addField(FieldSpec.builder(toTypeName(type), name)
                                            .addModifiers(Modifier.PRIVATE)
                                            .build());
         }
@@ -193,7 +190,7 @@ public final class Common {
             var symbol = symbolProvider.toSymbol(member);
             if (isAggregate(symbol)) {
                 var name = symbolProvider.toMemberName(member);
-                builder.addStatement("this.$L = new $T<>()", name, toClassName(concreteClassFor(symbol)));
+                builder.addStatement("this.$L = new $T<>()", name, toTypeName(concreteClassFor(symbol)));
             }
         }
         return builder.build();
@@ -202,13 +199,13 @@ public final class Common {
     static MethodSpec generateBuilderCopyConstructor(Shape shape, Symbol symbol, SymbolProvider symbolProvider) {
         var builder = MethodSpec.constructorBuilder()
                                 .addModifiers(Modifier.PRIVATE)
-                                .addParameter(toClassName(symbol), "that");
+                                .addParameter(toTypeName(symbol), "that");
         for (var member : shape.members()) {
             var name = symbolProvider.toMemberName(member);
             var type = symbolProvider.toSymbol(member);
             if (isAggregate(type)) {
                 builder.addStatement("this.$1L = new $2T<>(that.$1L)",
-                                     name, toClassName(concreteClassFor(type)));
+                                     name, toTypeName(concreteClassFor(type)));
             } else {
                 builder.addStatement("this.$1L = that.$1L", name);
             }
@@ -226,6 +223,7 @@ public final class Common {
         switch (aggregateType(type)) {
             case MAP -> {
                 builderClass.addMethod(stubForBuilderFluentMemberSetter(name, type)
+                                           .addModifiers(Modifier.PUBLIC)
                                            .addAnnotation(Override.class)
                                            .addStatement("this.$L.clear()", name)
                                            .addStatement("this.$1L.putAll($1L)", name)
@@ -233,6 +231,7 @@ public final class Common {
             }
             case LIST, SET -> {
                 builderClass.addMethod(stubForBuilderFluentMemberSetter(name, type)
+                                           .addModifiers(Modifier.PUBLIC)
                                            .addAnnotation(Override.class)
                                            .addStatement("this.$L.clear()", name)
                                            .addStatement("this.$1L.addAll($1L)", name)
@@ -258,13 +257,13 @@ public final class Common {
 
         builder.addMethod(MethodSpec.methodBuilder("get" + cname)
                                     .addModifiers(Modifier.PUBLIC)
-                                    .returns(toClassName(type))
+                                    .returns(toTypeName(type))
                                     .addStatement("return $L", name)
                                     .build());
 
         builder.addMethod(MethodSpec.methodBuilder("set" + cname)
                                     .addModifiers(Modifier.PUBLIC)
-                                    .addParameter(toClassName(type), name)
+                                    .addParameter(toTypeName(type), name)
                                     .returns(void.class)
                                     .addStatement("this.$1L = $1L", name)
                                     .build());

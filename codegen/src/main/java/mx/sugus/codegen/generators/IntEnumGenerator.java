@@ -1,6 +1,6 @@
 package mx.sugus.codegen.generators;
 
-import static mx.sugus.codegen.util.PoetUtils.toClassName;
+import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.JavaSymbolProvider;
@@ -28,7 +28,7 @@ public record IntEnumGenerator(
 
     public void generate() {
         var spec = generateType();
-        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec));
+        delegator.useShapeWriter(shape, w -> PoetUtils.emit(w, spec, symbol.getNamespace()));
     }
 
     TypeSpec generateType() {
@@ -44,7 +44,7 @@ public record IntEnumGenerator(
     }
 
     FieldSpec generateValueField() {
-        return FieldSpec.builder(toClassName(JavaSymbolProvider.STRING), "value")
+        return FieldSpec.builder(toTypeName(JavaSymbolProvider.STRING), "value")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build();
     }

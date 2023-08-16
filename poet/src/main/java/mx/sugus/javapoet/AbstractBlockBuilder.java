@@ -35,6 +35,10 @@ public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>,
         return "missing closing element of: " + last.getClass().getName();
     }
 
+    public B addCode(String format, Object... args) {
+        return addStatement(CodeSnippet.builder().add(format, args).build());
+    }
+
     public B addStatement(String statement) {
         return addStatement(Statement.of(statement));
     }
@@ -238,6 +242,38 @@ public abstract class AbstractBlockBuilder<B extends AbstractBlockBuilder<B, T>,
         Consumer<AbstractBlockBuilder<B, T>> catchBody
     ) {
         return tryStatement(tryBody, Expression.of(catchParameter), catchBody);
+    }
+
+    public B beginSwitchStatement(SyntaxNode expression) {
+        state.push(SwitchStatement.builder(expression));
+        return (B) this;
+    }
+
+    public B nextSwitchCase(SyntaxNode label) {
+        var last = peekExpecting(SwitchStatement.Builder.class, SwitchLabelBlock.Builder.class);
+        if (last instanceof SwitchLabelBlock.Builder) {
+            var prevCase = popExpecting(SwitchLabelBlock.Builder.class);
+            addStatement(prevCase.build());
+        }
+        state.push(SwitchLabelBlock.builder(label));
+        return (B) this;
+    }
+
+    public B nextSwitchCase(String format, Object... args) {
+        return nextSwitchCase(Expression.of(format, args));
+    }
+
+    public B defaultSwitchCase() {
+        return nextSwitchCase(null);
+    }
+
+    public B endSwitchStatement() {
+        var last = popExpecting(SwitchStatement.Builder.class, SwitchLabelBlock.Builder.class);
+        if (last instanceof SwitchLabelBlock.Builder) {
+            addStatement(last.build());
+            last = popExpecting(SwitchStatement.Builder.class);
+        }
+        return addStatement(last.build());
     }
 
     // --- Legacy B/C control flow
