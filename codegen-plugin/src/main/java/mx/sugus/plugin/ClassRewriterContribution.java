@@ -23,8 +23,7 @@ public class ClassRewriterContribution {
         }
 
         public Builder archetype(CodegenArchetype structure) {
-
-
+            return this;
         }
 
         public Builder ordering() {

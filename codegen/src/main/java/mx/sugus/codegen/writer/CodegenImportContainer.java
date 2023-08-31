@@ -17,7 +17,6 @@ public class CodegenImportContainer implements ImportContainer {
 
     @Override
     public void importSymbol(Symbol symbol, String s) {
-        // No aliasing support, import the symbol as-is.
         importSymbol(symbol);
     }
 

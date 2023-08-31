@@ -1,12 +1,12 @@
 package mx.sugus.codegen.generators;
 
-import static mx.sugus.codegen.JavaSymbolProvider.mapStringToV;
+import static mx.sugus.codegen.JavaSymbolProviderImpl.mapStringToV;
 import static mx.sugus.codegen.SymbolConstants.fromClassName;
 import static mx.sugus.codegen.util.PoetUtils.toClassName;
 import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import javax.lang.model.element.Modifier;
-import mx.sugus.codegen.JavaSymbolProvider;
+import mx.sugus.codegen.JavaSymbolProviderImpl;
 import mx.sugus.codegen.util.Naming;
 import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.codegen.writer.CodegenWriter;
@@ -41,7 +41,7 @@ public record EnumGenerator(
     static MethodSpec generateConstructor() {
         return MethodSpec.constructorBuilder()
                          .addModifiers(Modifier.PRIVATE)
-                         .addParameter(toTypeName(JavaSymbolProvider.STRING), "value")
+                         .addParameter(toTypeName(JavaSymbolProviderImpl.STRING), "value")
                          .addStatement("this.value = value")
                          .build();
     }
@@ -57,10 +57,6 @@ public record EnumGenerator(
 
     public void generate() {
         var b = TypeSpec.enumBuilder(symbol.getName())
-                        .addAnnotation(AnnotationSpec
-                                           .builder(toClassName(fromClassName("software.amazon.awssdk.annotations.Generated")))
-                                           .addMember("value", "mx.sugus.smithy.java:codegen")
-                                           .build())
                         .addModifiers(Modifier.PUBLIC);
         generateConstants(b);
         generateValueMapField(b);

@@ -7,9 +7,9 @@
     },
     "plugins": {
         "smithy-java-codegen": {
-            "service": "com.amazonaws.groundstation#GroundStation",
-            "shortName": "GroundStation",
-            "package": "com.example.groundstation",
+            "service": "mx.sugus.syntax.java#JavaSyntax",
+            "shortName": "JavaSyntax",
+            "package": "mx.sugus.syntax.java",
             "packageVersion": "0.0.1"
         }
     }

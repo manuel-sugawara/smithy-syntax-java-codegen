@@ -1,10 +1,8 @@
 package mx.sugus.codegen;
 
 import mx.sugus.codegen.generators.EnumGenerator;
-import mx.sugus.codegen.generators.ErrorGenerator;
-import mx.sugus.codegen.generators.IntEnumGenerator;
+import mx.sugus.codegen.generators.ServiceGenerator;
 import mx.sugus.codegen.generators.StructureGenerator;
-import mx.sugus.codegen.generators.UnionGenerator;
 import mx.sugus.codegen.integration.JavaCodegenIntegration;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.directed.CreateContextDirective;
@@ -23,7 +21,7 @@ public final class JavaDirectedCodegen
 
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<JavaCodegenSettings> directive) {
-        return SymbolProvider.cache(JavaSymbolProvider.create(directive));
+        return SymbolProvider.cache(JavaSymbolProviderImpl.create(directive));
     }
 
     @Override
@@ -33,6 +31,14 @@ public final class JavaDirectedCodegen
 
     @Override
     public void generateService(GenerateServiceDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
+        new ServiceGenerator(
+            directive.model(),
+            directive.symbol(),
+            directive.shape(),
+            new JavaSymbolProviderWrapper(directive.symbolProvider()),
+            directive.context().writerDelegator(),
+            directive.settings().packageName()
+        ).generate();
     }
 
     @Override
@@ -41,31 +47,17 @@ public final class JavaDirectedCodegen
             directive.model(),
             directive.symbol(),
             directive.shape(),
-            directive.symbolProvider(),
+            new JavaSymbolProviderWrapper(directive.symbolProvider()),
             directive.context().writerDelegator()
         ).generate();
     }
 
     @Override
     public void generateError(GenerateErrorDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
-        new ErrorGenerator(
-            directive.model(),
-            directive.symbol(),
-            directive.shape(),
-            directive.symbolProvider(),
-            directive.context().writerDelegator()
-        ).generate();
     }
 
     @Override
     public void generateUnion(GenerateUnionDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
-        new UnionGenerator(
-            directive.model(),
-            directive.symbol(),
-            directive.shape(),
-            directive.symbolProvider(),
-            directive.context().writerDelegator()
-        ).generate();
     }
 
     @Override
@@ -81,12 +73,5 @@ public final class JavaDirectedCodegen
 
     @Override
     public void generateIntEnumShape(GenerateIntEnumDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
-        new IntEnumGenerator(
-            directive.model(),
-            directive.symbol(),
-            directive.shape().asIntEnumShape().orElseThrow(),
-            directive.symbolProvider(),
-            directive.context().writerDelegator()
-        ).generate();
     }
 }

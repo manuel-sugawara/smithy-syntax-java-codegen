@@ -22,5 +22,6 @@ dependencies {
     implementation("software.amazon.smithy:smithy-rules-engine:$smithyVersion")
     implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
     implementation("software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion")
+    implementation("mx.sugus.syntax.java:smithy-java-syntax-traits:0.1")
     testImplementation("org.mockito:mockito-core:3.+")
 }

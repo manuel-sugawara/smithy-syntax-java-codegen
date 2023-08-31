@@ -16,17 +16,17 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
     }
 
     @Override
-    public void execute(PluginContext pluginContext) {
-        JavaCodegenSettings javaCodegenSettings = JavaCodegenSettings.from(pluginContext.getSettings());
+    public void execute(PluginContext context) {
+        JavaCodegenSettings settings = JavaCodegenSettings.from(context.getSettings());
         runner.directedCodegen(new JavaDirectedCodegen());
         runner.integrationClass(JavaCodegenIntegration.class);
-        runner.fileManifest(pluginContext.getFileManifest());
-        runner.model(pluginContext.getModel());
-        runner.settings(javaCodegenSettings);
-        runner.service(javaCodegenSettings.service());
+        runner.fileManifest(context.getFileManifest());
+        runner.model(context.getModel());
+        runner.settings(settings);
+        runner.service(settings.service());
         runner.performDefaultCodegenTransforms();
         runner.changeStringEnumsToEnumShapes(true);
-        runner.createDedicatedInputsAndOutputs();
+        runner.createDedicatedInputsAndOutputs("Request", "Response");
         runner.run();
     }
 }

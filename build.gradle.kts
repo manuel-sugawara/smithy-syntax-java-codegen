@@ -2,6 +2,7 @@ plugins {
     `java-library`
     checkstyle
     //id("com.github.spotbugs") version "4.7.3"
+    `maven-publish`
 }
 
 // The root project doesn't produce a JAR.

@@ -12,6 +12,7 @@ import software.amazon.smithy.codegen.core.SymbolReference;
 
 public class PoetUtils {
 
+    // TODO move toTypeName to SymbolProvider
     public static TypeName toTypeName(Symbol s) {
         var baseClass = ClassName.get(s.getNamespace(), s.getName());
         if (s.getReferences().isEmpty()) {
@@ -47,4 +48,5 @@ public class PoetUtils {
         //spec.staticImports().forEach(i -> i.memberNames().forEach(m -> builder.addStaticImport(i.className(), m)));
         return builder.build();
     }
+
 }
