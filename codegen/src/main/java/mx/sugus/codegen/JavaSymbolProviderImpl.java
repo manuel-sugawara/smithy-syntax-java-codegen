@@ -302,6 +302,11 @@ public class JavaSymbolProviderImpl implements JavaSymbolProvider, ShapeVisitor<
         return escaper.escape(name);
     }
 
+    private String memberName(String name) {
+        return escaper.escape(Naming.pascalCase(name));
+    }
+
+
     private String shapeClassPath(Shape shape) {
         //return PathUtil.from(PathUtil.from(settings.packageParts()), "model", shapeName(shape) + ".java");
         //TODO the package should be inside "model", how do we pass that down?

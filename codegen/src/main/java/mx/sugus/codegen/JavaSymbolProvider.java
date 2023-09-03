@@ -37,6 +37,7 @@ public interface JavaSymbolProvider extends SymbolProvider {
         Symbol s = concreteClassFor(symbol);
         return ClassName.get(s.getNamespace(), s.getName());
     }
+
     default String toUnmodifiableCollection(Symbol symbol) {
         return SymbolConstants.toUnmodifiableCollection(symbol);
     }

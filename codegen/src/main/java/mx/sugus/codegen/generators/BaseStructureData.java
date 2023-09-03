@@ -21,7 +21,6 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.StringTrait;
 
 public class BaseStructureData implements DirectedStructure {
-
     private final StructureGeneratorConfig config;
 
     public BaseStructureData(StructureGeneratorConfig config) {

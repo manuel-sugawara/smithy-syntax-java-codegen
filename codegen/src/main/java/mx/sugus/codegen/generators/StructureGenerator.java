@@ -1,26 +1,17 @@
 package mx.sugus.codegen.generators;
 
-import static mx.sugus.codegen.SymbolConstants.aggregateType;
-import static mx.sugus.codegen.SymbolConstants.concreteClassFor;
-import static mx.sugus.codegen.SymbolConstants.isAggregate;
-import static mx.sugus.codegen.util.PoetUtils.toTypeName;
-
-import java.util.Collections;
 import javax.lang.model.element.Modifier;
 import mx.sugus.codegen.JavaSymbolProvider;
 import mx.sugus.codegen.generators.internal.GenerateVisitor;
 import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.codegen.writer.CodegenWriter;
-import mx.sugus.javapoet.AnnotationSpec;
 import mx.sugus.javapoet.ClassName;
-import mx.sugus.javapoet.FieldSpec;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeSpec;
 import mx.sugus.javapoet.TypeVariableName;
 import mx.sugus.syntax.java.InterfaceTrait;
 import mx.sugus.syntax.java.JavaTrait;
-import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
@@ -64,7 +55,7 @@ public record StructureGenerator(
                                                 .addTypeVariable(TypeVariableName.get("T"))
                                                 .addParameter(visitor, "visitor")
                                                 .build())
-                    .build();
+                           .build();
 
             }
             var finalSpec = spec;
@@ -72,7 +63,7 @@ public record StructureGenerator(
         }
     }
 
-     TypeSpec generateDirectedSpec() {
+    TypeSpec generateDirectedSpec() {
         if (shape().hasTrait(JavaTrait.class)) {
             return null;
         }

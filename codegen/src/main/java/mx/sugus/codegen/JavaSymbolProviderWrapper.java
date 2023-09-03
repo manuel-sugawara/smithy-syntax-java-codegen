@@ -1,5 +1,6 @@
 package mx.sugus.codegen;
 
+import java.util.Objects;
 import mx.sugus.codegen.util.Name;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -10,7 +11,7 @@ public class JavaSymbolProviderWrapper implements JavaSymbolProvider {
     private final SymbolProvider symbolProvider;
 
     public JavaSymbolProviderWrapper(SymbolProvider symbolProvider) {
-        this.symbolProvider = symbolProvider;
+        this.symbolProvider = Objects.requireNonNull(symbolProvider, "symbolProvider");
     }
 
     @Override
