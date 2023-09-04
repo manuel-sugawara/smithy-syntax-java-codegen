@@ -6,13 +6,14 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
 
 public class BaseModuleConfig {
     private final Map<ShapeType, Set<ShapeTask>> inits;
-    private final Map<Identifier, Set<ShapeTaskInterceptor>> interceptors;
-    private final Map<Identifier, Set<ShapeSerializer>> serializers;
+    private final Map<Class<?>, Set<ShapeTaskInterceptor<?>>> interceptors;
+    private final Map<Class<?>, Set<ShapeSerializer<?>>> serializers;
 
     BaseModuleConfig(Builder builder) {
         var inits = new LinkedHashMap<ShapeType, Set<ShapeTask>>();
@@ -21,42 +22,48 @@ public class BaseModuleConfig {
         }
         this.inits = Collections.unmodifiableMap(inits);
 
-        var interceptors = new LinkedHashMap<Identifier, Set<ShapeTaskInterceptor>>();
+        var interceptors = new LinkedHashMap<Class<?>, Set<ShapeTaskInterceptor<?>>>();
         for (var kvp : builder.interceptors.entrySet()) {
             interceptors.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(kvp.getValue())));
         }
         this.interceptors = Collections.unmodifiableMap(interceptors);
 
-        var serializers = new LinkedHashMap<Identifier, Set<ShapeSerializer>>();
+        var serializers = new LinkedHashMap<Class<?>, Set<ShapeSerializer<?>>>();
         for (var kvp : builder.serializers.entrySet()) {
             serializers.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(kvp.getValue())));
         }
         this.serializers = Collections.unmodifiableMap(serializers);
     }
 
-    public Collection<ShapeTask> inits(Shape shape) {
-        return Collections.emptyList();
-    }
-
-    public Collection<ShapeTaskInterceptor> interceptors(ShapeTask task) {
-        return Collections.emptyList();
-    }
-
-    public Collection<ShapeSerializer> serializers(
-        JavaShapeDirective directive,
-        ShapeTask task
-    ) {
-        return Collections.emptyList();
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
+    public Collection<ShapeTask> inits(Shape shape) {
+        return inits.getOrDefault(shape.getType(), Collections.emptySet());
+    }
+
+    public <T> Collection<ShapeTaskInterceptor<T>> interceptors(ShapeTask<T> task) {
+        return interceptors.getOrDefault(task.clazz(), Collections.emptySet())
+            .stream()
+            .map(x -> (ShapeTaskInterceptor<T>) x)
+            .collect(Collectors.toSet());
+    }
+
+    public <T> Collection<ShapeSerializer<T>> serializers(
+        JavaShapeDirective directive,
+        ShapeTask<T> task
+    ) {
+        return serializers.getOrDefault(task.clazz(),Collections.emptySet())
+            .stream()
+            .map(x -> (ShapeSerializer<T>) x)
+            .collect(Collectors.toSet());
+    }
+
     public static class Builder {
         private Map<ShapeType, Set<ShapeTask>> inits = new LinkedHashMap<>();
-        private Map<Identifier, Set<ShapeTaskInterceptor>> interceptors = new LinkedHashMap<>();
-        private Map<Identifier, Set<ShapeSerializer>> serializers = new LinkedHashMap<>();
+        private Map<Class<?>, Set<ShapeTaskInterceptor<?>>> interceptors = new LinkedHashMap<>();
+        private Map<Class<?>, Set<ShapeSerializer<?>>> serializers = new LinkedHashMap<>();
 
         public Builder() {
         }
@@ -67,14 +74,14 @@ public class BaseModuleConfig {
             return this;
         }
 
-        public Builder addInterceptor(Identifier id, ShapeTaskInterceptor interceptor) {
-            interceptors.computeIfAbsent(id, t -> new LinkedHashSet<>())
+        public Builder addInterceptor(ShapeTaskInterceptor<?> interceptor) {
+            interceptors.computeIfAbsent(interceptor.clazz(), t -> new LinkedHashSet<>())
                         .add(interceptor);
             return this;
         }
 
-        public Builder addSerializer(Identifier id, ShapeSerializer serializer) {
-            serializers.computeIfAbsent(id, t -> new LinkedHashSet<>())
+        public Builder addSerializer(ShapeSerializer<?> serializer) {
+            serializers.computeIfAbsent(serializer.clazz(), t -> new LinkedHashSet<>())
                        .add(serializer);
             return this;
         }

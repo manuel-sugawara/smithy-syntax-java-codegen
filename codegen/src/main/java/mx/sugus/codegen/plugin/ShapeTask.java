@@ -1,16 +1,17 @@
 package mx.sugus.codegen.plugin;
 
 import java.util.function.Function;
-import mx.sugus.javapoet.TypeSpec;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
 
-public class ShapeTask {
+public class ShapeTask<T> {
+    private final Class<T> clazz;
     private final ShapeType type;
     private final Identifier identifier;
-    private final Function<JavaShapeDirective, TypeSpec> handler;
+    private final Function<JavaShapeDirective, T> handler;
 
-    ShapeTask(Builder builder) {
+    ShapeTask(Builder<T> builder) {
+        this.clazz = builder.clazz;
         this.type = builder.type;
         this.identifier = builder.identifier;
         this.handler = builder.handler;
@@ -21,6 +22,14 @@ public class ShapeTask {
         return new Identifier(shapeId.getNamespace(), shapeId.getName());
     }
 
+    public static <T> Builder<T> builder(Class<T> clazz) {
+        return new Builder<>(clazz);
+    }
+
+    public Class<T> clazz() {
+        return clazz;
+    }
+
     public ShapeType type() {
         return type;
     }
@@ -29,36 +38,38 @@ public class ShapeTask {
         return identifier;
     }
 
-    public Function<JavaShapeDirective, TypeSpec> handler() {
+    public Function<JavaShapeDirective, T> handler() {
         return handler;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    public static class Builder<T> {
+        private Class<T> clazz;
 
-    public static class Builder {
         private ShapeType type;
         private Identifier identifier;
-        private Function<JavaShapeDirective, TypeSpec> handler;
+        private Function<JavaShapeDirective, T> handler;
 
-        public Builder type(ShapeType type) {
+        public Builder(Class<T> clazz) {
+            this.clazz = clazz;
+        }
+
+        public Builder<T> type(ShapeType type) {
             this.type = type;
             return this;
         }
 
-        public Builder taskId(Identifier identifier) {
+        public Builder<T> taskId(Identifier identifier) {
             this.identifier = identifier;
             return this;
         }
 
-        public Builder handler(Function<JavaShapeDirective, TypeSpec> init) {
+        public Builder<T> handler(Function<JavaShapeDirective, T> init) {
             this.handler = init;
             return this;
         }
 
-        public ShapeTask build() {
-            return new ShapeTask(this);
+        public ShapeTask<T> build() {
+            return new ShapeTask<>(this);
         }
     }
 }

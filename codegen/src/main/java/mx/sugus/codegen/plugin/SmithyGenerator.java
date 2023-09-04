@@ -75,12 +75,14 @@ public class SmithyGenerator implements DirectedCodegen<JavaCodegenContext, Java
     }
 
     private JavaShapeDirective from(ShapeDirective<? extends Shape, JavaCodegenContext, JavaCodegenSettings> directive) {
+        var symbolProvider = new JavaSymbolProviderWrapper(directive.symbolProvider());
+        var shape = directive.shape();
         return JavaShapeDirective
             .builder()
             .model(directive.model())
-            .symbol(directive.symbol())
-            .shape(directive.shape())
-            .symbolProvider(new JavaSymbolProviderWrapper(directive.symbolProvider()))
+            .symbol(symbolProvider.toSymbol(shape))
+            .shape(shape)
+            .symbolProvider(symbolProvider)
             .context(directive.context())
             .settings(directive.settings())
             .build();

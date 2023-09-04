@@ -10,21 +10,69 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import mx.sugus.codegen.generators2.BaseStructureData;
+import mx.sugus.codegen.util.PoetUtils;
+import mx.sugus.javapoet.TypeSpec;
 import software.amazon.smithy.model.node.ObjectNode;
+import software.amazon.smithy.model.shapes.ShapeType;
 
-public class DefaultBaseModuleConfig {
+public final class DefaultBaseModuleConfig {
 
-    public static BaseModuleConfig newConfig() {
-        return BaseModuleConfig.builder().build();
+    private DefaultBaseModuleConfig() {
     }
 
     public static BaseModuleConfig newBaseConfig() {
-        return BaseModuleConfig.builder().build();
+        return BaseModuleConfig
+            .builder()
+            .addSerializer(
+                ShapeSerializer
+                    .builder(TypeSpecResult.class)
+                    .identifier(Identifier.of("mx.sugus.codegen.plugin", "TypeSpecResult"))
+                    .handler(DefaultBaseModuleConfig::serializeType)
+                    .build())
+            .addInit(ShapeType.STRUCTURE,
+                     ShapeTask.builder(TypeSpecResult.class)
+                              .type(ShapeType.STRUCTURE)
+                              .handler(DefaultBaseModuleConfig::initType2)
+                              .build())
+            .build();
+    }
+
+
+    public static void serializeType(JavaShapeDirective directive, TypeSpecResult result) {
+        var ns = directive.settings().packageName();
+        if (result.namespace() != null) {
+            ns = ns + "." +
+                 result.namespace();
+        }
+        var namespace = ns;
+        if (result.spec() != null) {
+            var file = ns.replace(".", "/") + "/" + result.spec().name + ".java";
+            directive.context()
+                     .writerDelegator()
+                     .useFileWriter(file, w -> PoetUtils.emit(w, result.spec(), namespace));
+        }
+    }
+
+    public static TypeSpecResult initType(JavaShapeDirective directive) {
+        var name = directive.symbolProvider().toShapeJavaName(directive.shape());
+        var spec = TypeSpec.classBuilder(name.toString()).build();
+        return TypeSpecResult.builder()
+                             .spec(spec)
+                             .build();
+    }
+
+    public static TypeSpecResult initType2(JavaShapeDirective directive) {
+        var name = directive.symbolProvider().toShapeJavaName(directive.shape());
+        var spec = new BaseStructureData()
+            .build(directive);
+        return TypeSpecResult.builder()
+                             .spec(spec)
+                             .build();
     }
 
     public static BaseModuleConfig buildDependants(PluginLoader loader, ObjectNode basePluginConfig) {
         var pluginsEnabled = pluginsEnabled(basePluginConfig);
-        // Somewhere the dependant plugins have to be resolved.
         var pluginsLoaded = loader.loadAll(pluginsEnabled.keySet());
         if (!pluginsLoaded.isFullyResolved()) {
             throw new RuntimeException("unresolved plugins: " + pluginsLoaded.unresolved());
@@ -60,14 +108,14 @@ public class DefaultBaseModuleConfig {
 
         /* Fire off a DFS from each node in the graph. */
         graph.outGraph.keySet().stream().sorted(Comparator.comparing(Identifier::toString))
-            .forEach(node -> {
-                         explore(node, graph, result, visited, expanded);
-                     });
+                      .forEach(node -> {
+                          explore(node, graph, result, visited, expanded);
+                      });
         /* Hand back the resulting ordering. */
         return result.stream().map(pluginsLoaded::get).collect(Collectors.toList());
     }
 
-    public static void explore(Identifier node, Graph graph,  List<Identifier> ordering, Set<Identifier> visited,
+    public static void explore(Identifier node, Graph graph, List<Identifier> ordering, Set<Identifier> visited,
                                Set<Identifier> expanded) {
         /* Check whether we've been here before.  If so, we should stop the
          * search.

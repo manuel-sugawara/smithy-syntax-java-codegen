@@ -29,6 +29,7 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
         //runner.directedCodegen(new JavaDirectedCodegen());
         runner.directedCodegen(new SmithyGenerator(
             new BaseModule(DefaultBaseModuleConfig.buildDependants(pluginLoader(), settingsNode))));
+
         runner.integrationClass(JavaCodegenIntegration.class);
         runner.fileManifest(context.getFileManifest());
         runner.model(context.getModel());

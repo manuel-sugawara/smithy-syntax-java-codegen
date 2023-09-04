@@ -1,26 +1,27 @@
 package mx.sugus.codegen.plugin;
 
 import java.util.function.BiFunction;
-import mx.sugus.javapoet.TypeSpec;
-import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
 
-public class ShapeTaskInterceptor {
+public class ShapeTaskInterceptor<T> {
+    private final Class<T> clazz;
     private final ShapeType type;
     private final String name;
-    private final BiFunction<JavaShapeDirective, TypeSpec, TypeSpec> handler;
+    private final BiFunction<JavaShapeDirective, T, T> handler;
 
-
-    ShapeTaskInterceptor(ShapeType type, String name, BiFunction<JavaShapeDirective, TypeSpec, TypeSpec> handler) {
-        this.type = type;
-        this.name = name;
-        this.handler = handler;
-    }
-
-    ShapeTaskInterceptor(Builder builder) {
+    ShapeTaskInterceptor(Builder<T> builder) {
+        this.clazz = builder.clazz;
         this.type = builder.type;
         this.name = builder.name;
         this.handler = builder.handler;
+    }
+
+    public static <T> Builder<T> builder(Class<T> clazz) {
+        return new Builder<>(clazz);
+    }
+
+    public Class<T> clazz() {
+        return clazz;
     }
 
     public ShapeType type() {
@@ -31,36 +32,37 @@ public class ShapeTaskInterceptor {
         return name;
     }
 
-    public BiFunction<JavaShapeDirective, TypeSpec, TypeSpec> handler() {
+    public BiFunction<JavaShapeDirective, T, T> handler() {
         return handler;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
+    public static class Builder<T> {
+        private Class<T> clazz;
         private ShapeType type;
         private String name;
-        private BiFunction<JavaShapeDirective, TypeSpec, TypeSpec> handler;
+        private BiFunction<JavaShapeDirective, T, T> handler;
 
-        public Builder type(ShapeType type) {
+        public Builder(Class<T> clazz) {
+            this.clazz = clazz;
+        }
+
+        public Builder<T> type(ShapeType type) {
             this.type = type;
             return this;
         }
 
-        public Builder name(String name) {
+        public Builder<T> name(String name) {
             this.name = name;
             return this;
         }
 
-        public Builder handler(BiFunction<JavaShapeDirective, TypeSpec, TypeSpec> handler) {
+        public Builder<T> handler(BiFunction<JavaShapeDirective, T, T> handler) {
             this.handler = handler;
             return this;
         }
 
-        public ShapeTaskInterceptor build() {
-            return new ShapeTaskInterceptor(this);
+        public ShapeTaskInterceptor<T> build() {
+            return new ShapeTaskInterceptor<>(this);
         }
     }
 }

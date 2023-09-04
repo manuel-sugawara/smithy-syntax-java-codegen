@@ -16,22 +16,6 @@ public class JavaShapeDirective {
     private final JavaCodegenContext context;
     private final JavaCodegenSettings settings;
 
-    public JavaShapeDirective(
-        Model model,
-        Symbol symbol,
-        Shape shape,
-        JavaSymbolProvider symbolProvider,
-        JavaCodegenContext context,
-        JavaCodegenSettings settings
-    ) {
-        this.model = model;
-        this.symbol = symbol;
-        this.shape = shape;
-        this.symbolProvider = symbolProvider;
-        this.context = context;
-        this.settings = settings;
-    }
-
     JavaShapeDirective(Builder builder) {
         this.model = Objects.requireNonNull(builder.model, "model");
         this.symbol = builder.symbol; // Objects.requireNonNull(builder.symbol, "symbol");
@@ -39,7 +23,6 @@ public class JavaShapeDirective {
         this.symbolProvider = Objects.requireNonNull(builder.symbolProvider, "symbolProvider");
         this.context = Objects.requireNonNull(builder.context, "context");
         this.settings = Objects.requireNonNull(builder.settings, "settings");
-
     }
 
     public static Builder builder() {

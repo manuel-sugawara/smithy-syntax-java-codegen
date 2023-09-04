@@ -1,7 +1,5 @@
 package mx.sugus.codegen.plugin;
 
-import mx.sugus.javapoet.TypeSpec;
-
 public final class BaseModule {
     private final BaseModuleConfig config;
 
@@ -12,28 +10,28 @@ public final class BaseModule {
     public void generateShape(JavaShapeDirective directive) {
         var shape = directive.shape();
         for (var task : config.inits(shape)) {
-            var typeSpec = runTask(directive, task);
-            if (typeSpec != null) {
-                serializeResult(directive, task, typeSpec);
+            var result = runTask(directive, task);
+            if (result != null) {
+                serializeResult(directive, task, result);
             }
         }
     }
 
-    private TypeSpec runTask(JavaShapeDirective directive, ShapeTask task) {
-        var typeSpec = task.handler().apply(directive);
+    private <T> T runTask(JavaShapeDirective directive, ShapeTask<T> task) {
+        var result = task.handler().apply(directive);
         for (var interceptor : config.interceptors(task)) {
-            typeSpec = interceptor.handler().apply(directive, typeSpec);
-            if (typeSpec == null) {
+            result = interceptor.handler().apply(directive, result);
+            if (result == null) {
                 return null;
             }
         }
-        return typeSpec;
+        return result;
     }
 
-    private void serializeResult(
+    private <T> void serializeResult(
         JavaShapeDirective directive,
-        ShapeTask task,
-        TypeSpec typeSpec
+        ShapeTask<T> task,
+        T typeSpec
     ) {
         for (var serializer : config.serializers(directive, task)) {
             serializer.handler().accept(directive, typeSpec);
