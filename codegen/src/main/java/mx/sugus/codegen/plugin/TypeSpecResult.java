@@ -11,6 +11,10 @@ public final class TypeSpecResult {
         this.namespace = builder.namespace;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public TypeSpec spec() {
         return spec;
     }
@@ -19,13 +23,22 @@ public final class TypeSpecResult {
         return namespace;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     public static class Builder {
         private TypeSpec spec;
         private String namespace;
+
+        Builder() {
+
+        }
+
+        Builder(TypeSpecResult result) {
+            this.spec = result.spec;
+            this.namespace = result.namespace;
+        }
 
         public Builder spec(TypeSpec spec) {
             this.spec = spec;

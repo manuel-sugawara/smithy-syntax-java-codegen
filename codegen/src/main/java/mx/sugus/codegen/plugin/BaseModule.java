@@ -19,10 +19,12 @@ public final class BaseModule {
 
     private <T> T runTask(JavaShapeDirective directive, ShapeTask<T> task) {
         var result = task.handler().apply(directive);
-        for (var interceptor : config.interceptors(task)) {
-            result = interceptor.handler().apply(directive, result);
-            if (result == null) {
-                return null;
+        if (result != null) {
+            for (var interceptor : config.interceptors(task)) {
+                result = interceptor.handler().apply(directive, result);
+                if (result == null) {
+                    return null;
+                }
             }
         }
         return result;

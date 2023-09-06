@@ -2,6 +2,7 @@ package mx.sugus.codegen.generators2;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import mx.sugus.codegen.plugin.JavaShapeDirective;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.FieldSpec;
@@ -21,6 +22,10 @@ public interface DirectedStructure extends DirectiveToTypeSpec {
         return Collections.emptyList();
     }
 
+    default Map<String, TypeSpec> enumConstants(JavaShapeDirective state) {
+        return Collections.emptyMap();
+    }
+
     List<MethodSpec> constructors(JavaShapeDirective state);
 
     List<MethodSpec> methodsFor(JavaShapeDirective state, MemberShape member);
@@ -36,6 +41,7 @@ public interface DirectedStructure extends DirectiveToTypeSpec {
     @Override
     default TypeSpec build(JavaShapeDirective state) {
         var builder = typeSpec(state);
+        enumConstants(state).forEach(builder::addEnumConstant);
         for (var member : state.shape().members()) {
             for (var field : fieldsFor(state, member)) {
                 builder.addField(field);
@@ -44,6 +50,7 @@ public interface DirectedStructure extends DirectiveToTypeSpec {
         for (var field : extraFields(state)) {
             builder.addField(field);
         }
+
         for (var method : constructors(state)) {
             builder.addMethod(method);
         }

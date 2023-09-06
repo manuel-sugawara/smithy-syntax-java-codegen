@@ -2,7 +2,6 @@ package mx.sugus.codegen.generators;
 
 import static mx.sugus.codegen.JavaSymbolProviderImpl.mapStringToV;
 import static mx.sugus.codegen.SymbolConstants.fromClassName;
-import static mx.sugus.codegen.util.PoetUtils.toClassName;
 import static mx.sugus.codegen.util.PoetUtils.toTypeName;
 
 import javax.lang.model.element.Modifier;
@@ -10,7 +9,6 @@ import mx.sugus.codegen.JavaSymbolProviderImpl;
 import mx.sugus.codegen.util.Naming;
 import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.codegen.writer.CodegenWriter;
-import mx.sugus.javapoet.AnnotationSpec;
 import mx.sugus.javapoet.FieldSpec;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterSpec;
@@ -113,5 +111,5 @@ public record EnumGenerator(
         b.addStatement("$>return $N$<", "UNKNOWN_TO_SDK_VERSION");
         b.endControlFlow();
         return b.build();
-}
+    }
 }

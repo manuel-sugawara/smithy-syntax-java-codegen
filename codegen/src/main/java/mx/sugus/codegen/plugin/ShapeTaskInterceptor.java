@@ -6,13 +6,13 @@ import software.amazon.smithy.model.shapes.ShapeType;
 public class ShapeTaskInterceptor<T> {
     private final Class<T> clazz;
     private final ShapeType type;
-    private final String name;
+    private final Identifier taskId;
     private final BiFunction<JavaShapeDirective, T, T> handler;
 
     ShapeTaskInterceptor(Builder<T> builder) {
         this.clazz = builder.clazz;
         this.type = builder.type;
-        this.name = builder.name;
+        this.taskId = builder.taskId;
         this.handler = builder.handler;
     }
 
@@ -28,8 +28,8 @@ public class ShapeTaskInterceptor<T> {
         return type;
     }
 
-    public String name() {
-        return name;
+    public Identifier taskId() {
+        return taskId;
     }
 
     public BiFunction<JavaShapeDirective, T, T> handler() {
@@ -39,7 +39,7 @@ public class ShapeTaskInterceptor<T> {
     public static class Builder<T> {
         private Class<T> clazz;
         private ShapeType type;
-        private String name;
+        private Identifier taskId;
         private BiFunction<JavaShapeDirective, T, T> handler;
 
         public Builder(Class<T> clazz) {
@@ -51,8 +51,8 @@ public class ShapeTaskInterceptor<T> {
             return this;
         }
 
-        public Builder<T> name(String name) {
-            this.name = name;
+        public Builder<T> taskId(Identifier taskId) {
+            this.taskId = taskId;
             return this;
         }
 

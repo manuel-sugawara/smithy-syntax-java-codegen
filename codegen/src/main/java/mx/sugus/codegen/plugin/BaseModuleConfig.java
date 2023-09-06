@@ -10,9 +10,10 @@ import java.util.stream.Collectors;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
 
+@SuppressWarnings("unchecked")
 public class BaseModuleConfig {
     private final Map<ShapeType, Set<ShapeTask>> inits;
-    private final Map<Class<?>, Set<ShapeTaskInterceptor<?>>> interceptors;
+    private final Map<Identifier, Set<ShapeTaskInterceptor<?>>> interceptors;
     private final Map<Class<?>, Set<ShapeSerializer<?>>> serializers;
 
     BaseModuleConfig(Builder builder) {
@@ -22,7 +23,7 @@ public class BaseModuleConfig {
         }
         this.inits = Collections.unmodifiableMap(inits);
 
-        var interceptors = new LinkedHashMap<Class<?>, Set<ShapeTaskInterceptor<?>>>();
+        var interceptors = new LinkedHashMap<Identifier, Set<ShapeTaskInterceptor<?>>>();
         for (var kvp : builder.interceptors.entrySet()) {
             interceptors.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(kvp.getValue())));
         }
@@ -44,25 +45,26 @@ public class BaseModuleConfig {
     }
 
     public <T> Collection<ShapeTaskInterceptor<T>> interceptors(ShapeTask<T> task) {
-        return interceptors.getOrDefault(task.clazz(), Collections.emptySet())
-            .stream()
-            .map(x -> (ShapeTaskInterceptor<T>) x)
-            .collect(Collectors.toSet());
+        return interceptors.getOrDefault(task.taskId(), Collections.emptySet())
+                           .stream()
+                           .filter(x -> x.clazz() == task.clazz())
+                           .map(x -> (ShapeTaskInterceptor<T>) x)
+                           .collect(Collectors.toList());
     }
 
     public <T> Collection<ShapeSerializer<T>> serializers(
         JavaShapeDirective directive,
         ShapeTask<T> task
     ) {
-        return serializers.getOrDefault(task.clazz(),Collections.emptySet())
-            .stream()
-            .map(x -> (ShapeSerializer<T>) x)
-            .collect(Collectors.toSet());
+        return serializers.getOrDefault(task.clazz(), Collections.emptySet())
+                          .stream()
+                          .map(x -> (ShapeSerializer<T>) x)
+                          .collect(Collectors.toSet());
     }
 
     public static class Builder {
         private Map<ShapeType, Set<ShapeTask>> inits = new LinkedHashMap<>();
-        private Map<Class<?>, Set<ShapeTaskInterceptor<?>>> interceptors = new LinkedHashMap<>();
+        private Map<Identifier, Set<ShapeTaskInterceptor<?>>> interceptors = new LinkedHashMap<>();
         private Map<Class<?>, Set<ShapeSerializer<?>>> serializers = new LinkedHashMap<>();
 
         public Builder() {
@@ -75,7 +77,7 @@ public class BaseModuleConfig {
         }
 
         public Builder addInterceptor(ShapeTaskInterceptor<?> interceptor) {
-            interceptors.computeIfAbsent(interceptor.clazz(), t -> new LinkedHashSet<>())
+            interceptors.computeIfAbsent(interceptor.taskId(), t -> new LinkedHashSet<>())
                         .add(interceptor);
             return this;
         }

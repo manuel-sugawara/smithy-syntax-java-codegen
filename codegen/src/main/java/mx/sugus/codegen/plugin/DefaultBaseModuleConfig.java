@@ -10,11 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import mx.sugus.codegen.generators2.BaseStructureData;
 import mx.sugus.codegen.util.PoetUtils;
-import mx.sugus.javapoet.TypeSpec;
 import software.amazon.smithy.model.node.ObjectNode;
-import software.amazon.smithy.model.shapes.ShapeType;
 
 public final class DefaultBaseModuleConfig {
 
@@ -30,11 +27,6 @@ public final class DefaultBaseModuleConfig {
                     .identifier(Identifier.of("mx.sugus.codegen.plugin", "TypeSpecResult"))
                     .handler(DefaultBaseModuleConfig::serializeType)
                     .build())
-            .addInit(ShapeType.STRUCTURE,
-                     ShapeTask.builder(TypeSpecResult.class)
-                              .type(ShapeType.STRUCTURE)
-                              .handler(DefaultBaseModuleConfig::initType2)
-                              .build())
             .build();
     }
 
@@ -54,26 +46,9 @@ public final class DefaultBaseModuleConfig {
         }
     }
 
-    public static TypeSpecResult initType(JavaShapeDirective directive) {
-        var name = directive.symbolProvider().toShapeJavaName(directive.shape());
-        var spec = TypeSpec.classBuilder(name.toString()).build();
-        return TypeSpecResult.builder()
-                             .spec(spec)
-                             .build();
-    }
-
-    public static TypeSpecResult initType2(JavaShapeDirective directive) {
-        var name = directive.symbolProvider().toShapeJavaName(directive.shape());
-        var spec = new BaseStructureData()
-            .build(directive);
-        return TypeSpecResult.builder()
-                             .spec(spec)
-                             .build();
-    }
-
     public static BaseModuleConfig buildDependants(PluginLoader loader, ObjectNode basePluginConfig) {
         var pluginsEnabled = pluginsEnabled(basePluginConfig);
-        var pluginsLoaded = loader.loadAll(pluginsEnabled.keySet());
+        var pluginsLoaded = loader.loadAll(pluginsEnabled.keySet(), pluginsEnabled);
         if (!pluginsLoaded.isFullyResolved()) {
             throw new RuntimeException("unresolved plugins: " + pluginsLoaded.unresolved());
         }
@@ -160,6 +135,7 @@ public final class DefaultBaseModuleConfig {
                                        .flatMap(x -> x.stream()
                                                       .map(name -> Identifier.of(name.packageName(), name.simpleName())))
                                        .collect(Collectors.toSet());
+        allPlugins.addAll(pluginsEnabled.keySet());
         while (true) {
             var newAllPlugins = allPlugins
                 .stream()
@@ -169,6 +145,7 @@ public final class DefaultBaseModuleConfig {
                 .flatMap(x -> x.stream()
                                .map(name -> Identifier.of(name.packageName(), name.simpleName())))
                 .collect(Collectors.toSet());
+            newAllPlugins.addAll(allPlugins);
             if (newAllPlugins.size() == allPlugins.size()) {
                 break;
             }
@@ -177,6 +154,9 @@ public final class DefaultBaseModuleConfig {
         Map<Identifier, Set<Identifier>> inverseGraph = new HashMap<>();
         for (var pluginId : allPlugins) {
             var plugin = pluginsLoaded.get(pluginId);
+            if (plugin == null) {
+                throw new RuntimeException("Cannot find the plugin with id: " + pluginId);
+            }
             Set<Identifier> requires = plugin.requires()
                                              .stream()
                                              .map(x -> Identifier.of(x.packageName(), x.simpleName()))
@@ -186,12 +166,15 @@ public final class DefaultBaseModuleConfig {
         }
         Map<Identifier, Set<Identifier>> graph = new HashMap<>();
         inverseGraph.forEach((k, v) -> {
+            if (v.isEmpty()) {
+                graph.computeIfAbsent(k, (x) -> new HashSet<>());
+            }
             for (var vertex : v) {
                 graph.computeIfAbsent(vertex, (x) -> new HashSet<>())
                      .add(k);
             }
         });
-
+        System.out.printf("=======>> inverse graph: %s\n=======>>        graph: %s\n", graph, inverseGraph);
         return new Graph(graph, inverseGraph);
     }
 

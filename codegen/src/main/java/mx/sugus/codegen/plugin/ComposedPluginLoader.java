@@ -1,7 +1,9 @@
 package mx.sugus.codegen.plugin;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import software.amazon.smithy.model.node.ObjectNode;
 
 public class ComposedPluginLoader implements PluginLoader {
     private final PluginLoader left;
@@ -13,14 +15,14 @@ public class ComposedPluginLoader implements PluginLoader {
     }
 
     @Override
-    public LoadResult loadPlugins(Set<Identifier> ids) {
-        var result = left.loadPlugins(ids);
-        var idToPlugin = new HashMap<>(result.resolved());
-        if (result.isFullyResolved()) {
-            return result;
+    public LoadResult loadPlugins(Set<Identifier> ids, Map<Identifier, ObjectNode> pluginConfig) {
+        var leftResult = left.loadPlugins(ids, pluginConfig);
+        if (leftResult.isFullyResolved()) {
+            return leftResult;
         }
-        var rightResult = right.loadPlugins(result.unresolved());
-
-        return result;
+        var rightResult = right.loadPlugins(leftResult.unresolved(), pluginConfig);
+        var plugins = new HashMap<Identifier, SmithyGeneratorPlugin>(leftResult.resolved());
+        plugins.putAll(rightResult.resolved());
+        return new LoadResult(rightResult.unresolved(), plugins);
     }
 }

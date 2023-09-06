@@ -10,7 +10,14 @@
             "service": "mx.sugus.syntax.java#JavaSyntax",
             "shortName": "JavaSyntax",
             "package": "mx.sugus.syntax.java",
-            "packageVersion": "0.0.1"
+            "packageVersion": "0.0.1",
+            "plugins": {
+                "mx.sugus.codegen.plugin.data#DataPluginProvider": {
+                },
+                "mx.sugus.codegen.plugin.syntax#SyntaxPluginProvider": {
+                    "syntaxNode": "mx.sugus.syntax.java#SyntaxNode"
+                }
+            }
         }
     }
 }
