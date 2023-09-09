@@ -19,7 +19,6 @@ public interface PluginLoader {
                                          .map(result.resolved::get)
                                          .map(SmithyGeneratorPlugin::requires)
                                          .flatMap(Collection::stream)
-                                         .map(x -> Identifier.of(x.packageName(), x.simpleName()))
                                          .collect(Collectors.toSet());
         while (true) {
             System.out.printf("PREV loadPlugins:: -----------------------------\n current result: [%s]\n", result.resolved);
@@ -30,7 +29,6 @@ public interface PluginLoader {
                                                 .map(result.resolved::get)
                                                 .map(SmithyGeneratorPlugin::requires)
                                                 .flatMap(Collection::stream)
-                                                .map(x -> Identifier.of(x.packageName(), x.simpleName()))
                                                 .collect(Collectors.toSet());
             //System.out.printf("NEW loadPlugins:: -----------------------------\n current result: [%s]", result.resolved);
             if (newAllRequired.size() == allRequired.size()) {

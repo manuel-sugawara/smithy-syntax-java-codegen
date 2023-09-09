@@ -3,16 +3,15 @@ package mx.sugus.codegen.plugin;
 import java.util.function.BiFunction;
 import software.amazon.smithy.model.shapes.ShapeType;
 
-public class ShapeTaskInterceptor<T> {
+public class ShapeTaskInterceptor<T> extends AbstractShapeTask<T> {
     private final Class<T> clazz;
     private final ShapeType type;
-    private final Identifier taskId;
     private final BiFunction<JavaShapeDirective, T, T> handler;
 
     ShapeTaskInterceptor(Builder<T> builder) {
+        super(builder.clazz, builder.type);
         this.clazz = builder.clazz;
         this.type = builder.type;
-        this.taskId = builder.taskId;
         this.handler = builder.handler;
     }
 
@@ -20,26 +19,18 @@ public class ShapeTaskInterceptor<T> {
         return new Builder<>(clazz);
     }
 
-    public Class<T> clazz() {
-        return clazz;
-    }
-
     public ShapeType type() {
         return type;
     }
 
-    public Identifier taskId() {
-        return taskId;
-    }
-
-    public BiFunction<JavaShapeDirective, T, T> handler() {
+    @Override
+    public BiFunction<JavaShapeDirective, T, T> transform() {
         return handler;
     }
 
     public static class Builder<T> {
         private Class<T> clazz;
         private ShapeType type;
-        private Identifier taskId;
         private BiFunction<JavaShapeDirective, T, T> handler;
 
         public Builder(Class<T> clazz) {
@@ -48,11 +39,6 @@ public class ShapeTaskInterceptor<T> {
 
         public Builder<T> type(ShapeType type) {
             this.type = type;
-            return this;
-        }
-
-        public Builder<T> taskId(Identifier taskId) {
-            this.taskId = taskId;
             return this;
         }
 

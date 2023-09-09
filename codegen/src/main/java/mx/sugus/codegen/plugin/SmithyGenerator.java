@@ -53,7 +53,6 @@ public class SmithyGenerator implements DirectedCodegen<JavaCodegenContext, Java
     public void generateStructure(GenerateStructureDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
         var javaShapeDirective = from(directive);
         module.generateShape(javaShapeDirective);
-
     }
 
     @Override

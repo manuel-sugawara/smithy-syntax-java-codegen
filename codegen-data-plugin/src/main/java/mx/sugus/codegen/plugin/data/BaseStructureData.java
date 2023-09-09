@@ -1,4 +1,4 @@
-package mx.sugus.codegen.generators2;
+package mx.sugus.codegen.plugin.data;
 
 import static mx.sugus.codegen.util.PoetUtils.toClassName;
 
@@ -19,9 +19,8 @@ import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.StringTrait;
 
-public class BaseStructureData implements DirectedStructure {
+public final class BaseStructureData implements DirectedStructure {
 
     @Override
     public ClassName className(JavaShapeDirective state) {

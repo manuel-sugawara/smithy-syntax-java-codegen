@@ -1,4 +1,4 @@
-package mx.sugus.codegen.generators2;
+package mx.sugus.codegen.plugin.data;
 
 import java.util.Collections;
 import java.util.List;

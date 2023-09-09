@@ -1,6 +1,7 @@
 package mx.sugus.codegen.plugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -132,8 +133,7 @@ public final class DefaultBaseModuleConfig {
                                        .map(pluginsLoaded::get)
                                        .filter(Objects::nonNull)
                                        .map(SmithyGeneratorPlugin::requires)
-                                       .flatMap(x -> x.stream()
-                                                      .map(name -> Identifier.of(name.packageName(), name.simpleName())))
+                                       .flatMap(Collection::stream)
                                        .collect(Collectors.toSet());
         allPlugins.addAll(pluginsEnabled.keySet());
         while (true) {
@@ -142,8 +142,7 @@ public final class DefaultBaseModuleConfig {
                 .map(pluginsLoaded::get)
                 .filter(Objects::nonNull)
                 .map(SmithyGeneratorPlugin::requires)
-                .flatMap(x -> x.stream()
-                               .map(name -> Identifier.of(name.packageName(), name.simpleName())))
+                .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
             newAllPlugins.addAll(allPlugins);
             if (newAllPlugins.size() == allPlugins.size()) {
@@ -159,7 +158,6 @@ public final class DefaultBaseModuleConfig {
             }
             Set<Identifier> requires = plugin.requires()
                                              .stream()
-                                             .map(x -> Identifier.of(x.packageName(), x.simpleName()))
                                              .collect(Collectors.toSet());
             inverseGraph.computeIfAbsent(pluginId, (x) -> new HashSet<>())
                         .addAll(requires);

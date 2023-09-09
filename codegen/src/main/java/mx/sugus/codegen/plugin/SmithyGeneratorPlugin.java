@@ -5,8 +5,11 @@ import mx.sugus.javapoet.ClassName;
 import software.amazon.smithy.model.node.ObjectNode;
 
 public interface SmithyGeneratorPlugin {
-    ClassName name();
-    Collection<ClassName> requires();
+    Identifier name();
+
+    Collection<Identifier> requires();
+
     BaseModuleConfig merge(BaseModuleConfig config);
+
     BaseModuleConfig merge(ObjectNode node, BaseModuleConfig config);
 }

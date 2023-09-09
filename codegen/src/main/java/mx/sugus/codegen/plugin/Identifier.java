@@ -10,6 +10,10 @@ public record Identifier(String namespace, String name) {
         return new Identifier(shapeId.getNamespace(), shapeId.getName());
     }
 
+    public static Identifier of(Class<?> value) {
+        return new Identifier(value.getPackageName(), value.getSimpleName());
+    }
+
     public static Identifier of(String namespace, String simpleName) {
         return new Identifier(namespace, simpleName);
     }

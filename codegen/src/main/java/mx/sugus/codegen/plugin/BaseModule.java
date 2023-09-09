@@ -29,11 +29,11 @@ public final class BaseModule {
         }
     }
 
-    private <T> T runTask(JavaShapeDirective directive, ShapeTask<T> task) {
-        var result = task.handler().apply(directive);
+    private <T> T runTask(JavaShapeDirective directive, ShapeBaseTask<T> task) {
+        var result = task.produce().apply(directive);
         if (result != null) {
             for (var interceptor : config.interceptors(task)) {
-                result = interceptor.handler().apply(directive, result);
+                result = interceptor.transform().apply(directive, result);
                 if (result == null) {
                     return null;
                 }
@@ -44,13 +44,13 @@ public final class BaseModule {
 
     private <T> void serializeResult(
         JavaShapeDirective directive,
-        ShapeTask<?> task,
+        ShapeBaseTask<?> task,
         T typeSpec
     ) {
         @SuppressWarnings("unchecked")
-        var taskNew = (ShapeTask<T>) task;
+        var taskNew = (ShapeBaseTask<T>) task;
         for (var serializer : config.serializers(directive, taskNew)) {
-            serializer.handler().accept(directive,  typeSpec);
+            serializer.consume().accept(directive,  typeSpec);
         }
     }
 }

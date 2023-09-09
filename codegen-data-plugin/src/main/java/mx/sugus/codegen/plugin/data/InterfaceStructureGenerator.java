@@ -1,4 +1,4 @@
-package mx.sugus.codegen.generators2;
+package mx.sugus.codegen.plugin.data;
 
 import static mx.sugus.codegen.util.PoetUtils.toClassName;
 
@@ -12,7 +12,6 @@ import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.TypeSpec;
 import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.model.shapes.MemberShape;
-import software.amazon.smithy.model.traits.StringTrait;
 
 public class InterfaceStructureGenerator implements DirectedStructure {
 

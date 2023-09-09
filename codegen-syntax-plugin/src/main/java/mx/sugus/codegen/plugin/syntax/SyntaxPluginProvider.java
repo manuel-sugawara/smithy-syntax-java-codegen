@@ -6,9 +6,11 @@ import mx.sugus.codegen.plugin.SmithyGeneratorPlugin;
 import software.amazon.smithy.model.node.ObjectNode;
 
 public class SyntaxPluginProvider implements PluginProvider {
+    public static final Identifier ID = Identifier.of(SyntaxPluginProvider.class);
+
     @Override
     public Identifier name() {
-        return Identifier.of("mx.sugus.codegen.plugin.syntax", "SyntaxPluginProvider");
+        return ID;
     }
 
     @Override

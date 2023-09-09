@@ -17,6 +17,7 @@ buildscript {
 
 dependencies {
     implementation(project(":codegen"))
+    implementation(project(":codegen-data-plugin"))
     implementation(project(":poet"))
     implementation("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
     implementation("software.amazon.smithy:smithy-model:$smithyVersion")

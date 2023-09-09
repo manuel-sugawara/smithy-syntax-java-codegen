@@ -3,7 +3,7 @@ package mx.sugus.codegen.plugin;
 import java.util.function.BiConsumer;
 import software.amazon.smithy.model.shapes.ShapeType;
 
-public final class ShapeSerializer<T> {
+public final class ShapeSerializer<T> extends AbstractShapeTask<T> {
     private final Class<T> clazz;
     private final Identifier identifier;
     // why do we need this? It's causing problems and
@@ -13,6 +13,7 @@ public final class ShapeSerializer<T> {
     private final BiConsumer<JavaShapeDirective, T> handler;
 
     ShapeSerializer(Builder<T> builder) {
+        super(builder.clazz, builder.type);
         this.clazz = builder.clazz;
         this.identifier = builder.identifier;
         this.type = builder.type;
@@ -40,7 +41,8 @@ public final class ShapeSerializer<T> {
         return name;
     }
 
-    public BiConsumer<JavaShapeDirective, T> handler() {
+    @Override
+    public BiConsumer<JavaShapeDirective, T> consume() {
         return handler;
     }
 

@@ -4,7 +4,9 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
+import mx.sugus.codegen.plugin.AbstractShapeTask;
 import mx.sugus.codegen.plugin.JavaShapeDirective;
+import mx.sugus.codegen.plugin.TypeSpecResult;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterizedTypeName;
@@ -13,12 +15,14 @@ import mx.sugus.syntax.java.InterfaceTrait;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.shapes.StructureShape;
 
-public class GenerateRewriteVisitor {
+public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
     private final String syntaxNode;
 
     public GenerateRewriteVisitor(String syntaxNode) {
+        super(TypeSpecResult.class, ShapeType.SERVICE);
         this.syntaxNode = syntaxNode;
     }
 
@@ -36,7 +40,8 @@ public class GenerateRewriteVisitor {
                                                                     directive.toClass(syntaxNode)));
     }
 
-    public TypeSpec generate(JavaShapeDirective directive) {
+    @Override
+    public TypeSpecResult produce(JavaShapeDirective directive) {
         var builder = typeSpec(directive);
         var shapeIds = mx.sugus.codegen.generators.internal.GenerateVisitor.shapesImplementing(syntaxNode, directive.model());
         for (var shape : directive.model().getStructureShapes()) {
@@ -50,7 +55,7 @@ public class GenerateRewriteVisitor {
                 }
             }
         }
-        return builder.build();
+        return TypeSpecResult.builder().spec(builder.build()).build();
     }
 
     MethodSpec.Builder visitForStructure(JavaShapeDirective directive, StructureShape shape) {

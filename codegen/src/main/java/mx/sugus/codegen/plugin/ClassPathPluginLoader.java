@@ -15,7 +15,7 @@ public class ClassPathPluginLoader implements PluginLoader {
             SmithyGeneratorPlugin plugin = tryLoadPlugin(identifier, pluginConfigs);
             if (plugin != null) {
                 var name = plugin.name();
-                plugins.put(Identifier.of(name.packageName(), name.simpleName()), plugin);
+                plugins.put(plugin.name(), plugin);
             }
         }
         var unresolved = new HashSet<>(ids);

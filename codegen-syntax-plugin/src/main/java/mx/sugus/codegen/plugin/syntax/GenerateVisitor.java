@@ -3,7 +3,9 @@ package mx.sugus.codegen.plugin.syntax;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
+import mx.sugus.codegen.plugin.AbstractShapeTask;
 import mx.sugus.codegen.plugin.JavaShapeDirective;
+import mx.sugus.codegen.plugin.TypeSpecResult;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterizedTypeName;
@@ -13,13 +15,20 @@ import mx.sugus.syntax.java.InterfaceTrait;
 import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.shapes.StructureShape;
 
-public class GenerateVisitor {
+public class GenerateVisitor extends AbstractShapeTask<TypeSpecResult> {
     private final String syntaxNode;
 
     public GenerateVisitor(String syntaxNode) {
+        super(TypeSpecResult.class, ShapeType.SERVICE);
         this.syntaxNode = syntaxNode;
+    }
+
+    @Override
+    public TypeSpecResult produce(JavaShapeDirective directive) {
+        return  TypeSpecResult.builder().spec(generate(directive)).build();
     }
 
     static boolean filterSyntaxNodes(String syntaxNode, Model model, StructureShape shape) {
