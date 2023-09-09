@@ -43,7 +43,7 @@ public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
     @Override
     public TypeSpecResult produce(JavaShapeDirective directive) {
         var builder = typeSpec(directive);
-        var shapeIds = mx.sugus.codegen.generators.internal.GenerateVisitor.shapesImplementing(syntaxNode, directive.model());
+        var shapeIds = GenerateVisitor.shapesImplementing(syntaxNode, directive.model());
         for (var shape : directive.model().getStructureShapes()) {
             if (shapeIds.contains(shape.getId())) {
                 if (!shape.hasTrait(InterfaceTrait.class)) {
