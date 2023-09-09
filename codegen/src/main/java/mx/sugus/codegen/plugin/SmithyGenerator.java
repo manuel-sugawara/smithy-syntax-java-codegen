@@ -8,6 +8,7 @@ import mx.sugus.codegen.integration.JavaCodegenIntegration;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.directed.CreateContextDirective;
 import software.amazon.smithy.codegen.core.directed.CreateSymbolProviderDirective;
+import software.amazon.smithy.codegen.core.directed.CustomizeDirective;
 import software.amazon.smithy.codegen.core.directed.DirectedCodegen;
 import software.amazon.smithy.codegen.core.directed.GenerateEnumDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateErrorDirective;
@@ -34,6 +35,12 @@ public class SmithyGenerator implements DirectedCodegen<JavaCodegenContext, Java
     @Override
     public JavaCodegenContext createContext(CreateContextDirective<JavaCodegenSettings, JavaCodegenIntegration> directive) {
         return JavaCodegenContext.fromContextDirective(directive);
+    }
+
+    @Override
+    public void customizeBeforeShapeGeneration(CustomizeDirective<JavaCodegenContext, JavaCodegenSettings> directive) {
+
+        // Does nothing by default.
     }
 
     @Override

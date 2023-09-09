@@ -12,14 +12,14 @@ import software.amazon.smithy.model.shapes.ShapeType;
 
 @SuppressWarnings("unchecked")
 public class BaseModuleConfig {
-    private final Map<ShapeType, Set<ShapeTask>> inits;
+    private final Map<ShapeType, Set<ShapeTask<?>>> inits;
     private final Map<Identifier, Set<ShapeTaskInterceptor<?>>> interceptors;
     private final Map<Class<?>, Set<ShapeSerializer<?>>> serializers;
 
     BaseModuleConfig(Builder builder) {
-        var inits = new LinkedHashMap<ShapeType, Set<ShapeTask>>();
+        var inits = new LinkedHashMap<ShapeType, Set<ShapeTask<?>>>();
         for (var kvp : builder.inits.entrySet()) {
-            inits.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(kvp.getValue())));
+            inits.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<ShapeTask<?>>(kvp.getValue())));
         }
         this.inits = Collections.unmodifiableMap(inits);
 
@@ -40,13 +40,14 @@ public class BaseModuleConfig {
         return new Builder();
     }
 
-    public Collection<ShapeTask> inits(Shape shape) {
+    public Collection<ShapeTask<?>> inits(Shape shape) {
         return inits.getOrDefault(shape.getType(), Collections.emptySet());
     }
 
     public <T> Collection<ShapeTaskInterceptor<T>> interceptors(ShapeTask<T> task) {
         return interceptors.getOrDefault(task.taskId(), Collections.emptySet())
                            .stream()
+                           // This might hide bugs, at lest a log entry will be adequate
                            .filter(x -> x.clazz() == task.clazz())
                            .map(x -> (ShapeTaskInterceptor<T>) x)
                            .collect(Collectors.toList());
@@ -63,7 +64,7 @@ public class BaseModuleConfig {
     }
 
     public static class Builder {
-        private Map<ShapeType, Set<ShapeTask>> inits = new LinkedHashMap<>();
+        private Map<ShapeType, Set<ShapeTask<?>>> inits = new LinkedHashMap<>();
         private Map<Identifier, Set<ShapeTaskInterceptor<?>>> interceptors = new LinkedHashMap<>();
         private Map<Class<?>, Set<ShapeSerializer<?>>> serializers = new LinkedHashMap<>();
 
@@ -72,6 +73,12 @@ public class BaseModuleConfig {
 
         public Builder addInit(ShapeType type, ShapeTask task) {
             inits.computeIfAbsent(type, t -> new LinkedHashSet<>())
+                 .add(task);
+            return this;
+        }
+
+        public Builder addInit(ShapeTask task) {
+            inits.computeIfAbsent(task.type(), t -> new LinkedHashSet<>())
                  .add(task);
             return this;
         }

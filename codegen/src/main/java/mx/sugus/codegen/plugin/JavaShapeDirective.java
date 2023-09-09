@@ -4,9 +4,13 @@ import java.util.Objects;
 import mx.sugus.codegen.JavaCodegenContext;
 import mx.sugus.codegen.JavaCodegenSettings;
 import mx.sugus.codegen.JavaSymbolProvider;
+import mx.sugus.javapoet.ClassName;
+import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.StringTrait;
 
 public class JavaShapeDirective {
     private final Model model;
@@ -51,6 +55,33 @@ public class JavaShapeDirective {
 
     public JavaCodegenSettings settings() {
         return settings;
+    }
+
+    public ClassName parentClass(Shape shape) {
+        var parent = shape.getTrait(IsaTrait.class).map(StringTrait::getValue).orElse("");
+        ClassName parentClassName;
+        if (parent.contains("#")) {
+            var asShapeId = ShapeId.from(parent);
+            var symbolProvider = symbolProvider();
+            var parentShape = model().expectShape(asShapeId);
+            parentClassName = symbolProvider.toClassName(parentShape);
+        } else {
+            parentClassName = ClassName.bestGuess(parent);
+        }
+        return parentClassName;
+    }
+
+    public ClassName toClass(ShapeId shapeId) {
+        var symbolProvider = symbolProvider();
+        var shape = model().expectShape(shapeId);
+        return symbolProvider.toClassName(shape);
+    }
+
+    public ClassName toClass(String unparsedShapeId) {
+        var shapeId = ShapeId.from(unparsedShapeId);
+        var symbolProvider = symbolProvider();
+        var shape = model().expectShape(shapeId);
+        return symbolProvider.toClassName(shape);
     }
 
     public static class Builder {

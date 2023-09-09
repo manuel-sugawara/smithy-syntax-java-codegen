@@ -21,7 +21,8 @@ import software.amazon.smithy.model.shapes.ShapeType;
 public class SyntaxPlugin implements SmithyGeneratorPlugin {
 
     private final ObjectNode config;
-    private final String syntaxNode = "SyntaxNode";
+    // 🙀  the value is hardcoded here 🙀
+    private final String syntaxNode = "mx.sugus.syntax.java#SyntaxNode";
 
     public SyntaxPlugin(ObjectNode node) {
         this.config = node;
@@ -30,23 +31,20 @@ public class SyntaxPlugin implements SmithyGeneratorPlugin {
     BaseModuleConfig.Builder newBaseConfig() {
         return BaseModuleConfig
             .builder()
-            .addInit(ShapeType.SERVICE,
-                     ShapeTask.builder(TypeSpecResult.class)
+            .addInit(ShapeTask.builder(TypeSpecResult.class)
                               .type(ShapeType.SERVICE)
                               .taskId(Identifier.of("mx.sugus.codegen.plugin.syntax", "SyntaxVisitor"))
                               .handler(this::syntaxVisitor)
                               .build())
-            .addInit(ShapeType.SERVICE,
-                     ShapeTask.builder(TypeSpecResult.class)
+            .addInit(ShapeTask.builder(TypeSpecResult.class)
                               .type(ShapeType.SERVICE)
                               .taskId(Identifier.of("mx.sugus.codegen.plugin.syntax", "SyntaxVisitor"))
                               .handler(this::syntaxRewriteVisitor)
                               .build())
-            .addInterceptor(
-                ShapeTaskInterceptor.builder(TypeSpecResult.class)
-                                    .taskId(Identifier.of("mx.sugus.codegen.plugin.data", "Default"))
-                                    .handler(this::syntaxInterceptor)
-                                    .build());
+            .addInterceptor(ShapeTaskInterceptor.builder(TypeSpecResult.class)
+                                                .taskId(Identifier.of("mx.sugus.codegen.plugin.data", "Default"))
+                                                .handler(this::syntaxInterceptor)
+                                                .build());
     }
 
     @Override
@@ -74,7 +72,9 @@ public class SyntaxPlugin implements SmithyGeneratorPlugin {
         var shapeIds = GenerateVisitor.shapesImplementing(syntaxNode(), directive.model());
         var shape = directive.shape();
         if (shapeIds.contains(shape.getId()) && !shape.hasTrait(InterfaceTrait.class)) {
-            var visitor = ParameterizedTypeName.get(ClassName.bestGuess(syntaxNode() + "Visitor"), TypeVariableName.get("T"));
+            var syntaxNodeClass = directive.toClass(syntaxNode());
+            var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
+            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("T"));
             var name = directive.symbolProvider().toShapeJavaName(shape);
             var spec = result.spec().toBuilder()
                              .addMethod(
@@ -84,7 +84,7 @@ public class SyntaxPlugin implements SmithyGeneratorPlugin {
                                            .returns(TypeVariableName.get("T", Object.class))
                                            .addTypeVariable(TypeVariableName.get("T"))
                                            .addParameter(visitor, "visitor")
-                                           .addStatement("return visitor.visit" + name + "(this)")
+                                           .addStatement("return visitor.visit$N(this)", name)
                                            .build())
                              .build();
 
@@ -92,8 +92,10 @@ public class SyntaxPlugin implements SmithyGeneratorPlugin {
                          .spec(spec)
                          .build();
         }
-        if (shape.hasTrait(InterfaceTrait.class) && shape.getId().getName().equals(syntaxNode)) {
-            var visitor = ParameterizedTypeName.get(ClassName.bestGuess(syntaxNode() + "Visitor"), TypeVariableName.get("T"));
+        if (shape.hasTrait(InterfaceTrait.class) && shape.getId().toString().equals(syntaxNode)) {
+            var syntaxNodeClass = directive.toClass(syntaxNode());
+            var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
+            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("T"));
             var spec = result.spec().toBuilder()
                              .addMethod(MethodSpec.methodBuilder("accept")
                                                   .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

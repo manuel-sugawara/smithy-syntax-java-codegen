@@ -27,8 +27,8 @@ public class InterfaceStructureGenerator implements DirectedStructure {
                              .addModifiers(Modifier.PUBLIC);
         var shape = state.shape();
         if (shape.hasTrait(IsaTrait.class)) {
-            var parent = shape.getTrait(IsaTrait.class).map(StringTrait::getValue).orElse("");
-            result.addSuperinterface(ClassName.bestGuess(parent));
+            var parent = state.parentClass(shape);
+            result.addSuperinterface(parent);
         }
         return result;
     }

@@ -22,23 +22,30 @@ public class GenerateRewriteVisitor {
         this.syntaxNode = syntaxNode;
     }
 
-    public TypeSpec.Builder typeSpec(JavaShapeDirective state) {
-        return TypeSpec.classBuilder(syntaxNode + "RewriteVisitor")
-                       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                       .addSuperinterface(ParameterizedTypeName.get(ClassName.bestGuess(syntaxNode + "Visitor"),
-                                                                    ClassName.bestGuess(syntaxNode)));
+    private String syntaxNode() {
+        return syntaxNode;
     }
 
-    public TypeSpec generate(JavaShapeDirective state) {
-        var builder = typeSpec(state);
-        var shapeIds = mx.sugus.codegen.generators.internal.GenerateVisitor.shapesImplementing(syntaxNode, state.model());
-        for (var shape : state.model().getStructureShapes()) {
+    public TypeSpec.Builder typeSpec(JavaShapeDirective directive) {
+        var syntaxNodeClass = directive.toClass(syntaxNode());
+        var rewriteVisitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "RewriteVisitor");
+        var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
+        return TypeSpec.classBuilder(rewriteVisitorClass)
+                       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                       .addSuperinterface(ParameterizedTypeName.get(visitorClass,
+                                                                    directive.toClass(syntaxNode)));
+    }
+
+    public TypeSpec generate(JavaShapeDirective directive) {
+        var builder = typeSpec(directive);
+        var shapeIds = mx.sugus.codegen.generators.internal.GenerateVisitor.shapesImplementing(syntaxNode, directive.model());
+        for (var shape : directive.model().getStructureShapes()) {
             if (shapeIds.contains(shape.getId())) {
                 if (!shape.hasTrait(InterfaceTrait.class)) {
-                    builder.addMethod(visitForStructure(state, shape)
+                    builder.addMethod(visitForStructure(directive, shape)
                                           .addAnnotation(Override.class)
                                           .addModifiers(Modifier.PUBLIC)
-                                          .returns(ClassName.bestGuess(syntaxNode))
+                                          .returns(directive.toClass(syntaxNode))
                                           .build());
                 }
             }
@@ -46,26 +53,27 @@ public class GenerateRewriteVisitor {
         return builder.build();
     }
 
-    MethodSpec.Builder visitForStructure(JavaShapeDirective state, StructureShape shape) {
+    MethodSpec.Builder visitForStructure(JavaShapeDirective directive, StructureShape shape) {
         var name = shape.getId().getName();
-        var symbolProvider = state.symbolProvider();
+        var symbolProvider = directive.symbolProvider();
         var type = symbolProvider.toTypeName(shape);
+        var syntaxNodeClass = directive.toClass(syntaxNode);
         var builder = MethodSpec.methodBuilder("visit" + name)
                                 .addModifiers(Modifier.PUBLIC)
-                                .returns(ClassName.bestGuess(syntaxNode))
+                                .returns(syntaxNodeClass)
                                 .addParameter(type, "node");
 
-        var shapeIds = GenerateVisitor.shapesImplementing(syntaxNode, state.model());
-        if (!hasMemberNodes(state, shapeIds, shape)) {
+        var shapeIds = GenerateVisitor.shapesImplementing(syntaxNode, directive.model());
+        if (!hasMemberNodes(directive, shapeIds, shape)) {
             return builder.addStatement("return node");
         }
         builder.addStatement("$T.Builder builder = null", type);
         for (var member : shape.members()) {
             if (shapeIds.contains(member.getTarget())) {
-                addSingleSyntaxNode(state, member, builder);
+                addSingleSyntaxNode(directive, member, builder);
             }
-            if (isCollectionOfSyntaxNode(shapeIds, state, member)) {
-                addCollectionOfSyntaxNode(state, member, builder);
+            if (isCollectionOfSyntaxNode(shapeIds, directive, member)) {
+                addCollectionOfSyntaxNode(directive, member, builder);
             }
         }
         builder.beginControlFlow("if (builder != null)")

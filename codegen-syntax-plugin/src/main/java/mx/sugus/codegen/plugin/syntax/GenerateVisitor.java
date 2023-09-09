@@ -22,15 +22,6 @@ public class GenerateVisitor {
         this.syntaxNode = syntaxNode;
     }
 
-    static boolean filterSyntaxNodes(String syntaxNode, StructureShape shape) {
-        if (shape.hasTrait(IsaTrait.class)) {
-            var isaValue = shape.getTrait(IsaTrait.class).map(IsaTrait::getValue).orElse("");
-            // todo, we also need here traverse all the ISA relationships to try to find a syntax node.
-            return isaValue.equals(syntaxNode);
-        }
-        return false;
-    }
-
     static boolean filterSyntaxNodes(String syntaxNode, Model model, StructureShape shape) {
         while (true) {
             if (shape.hasTrait(IsaTrait.class)) {
@@ -102,10 +93,15 @@ public class GenerateVisitor {
         return builder;
     }
 
-    public TypeSpec.Builder typeSpec(JavaShapeDirective state) {
-        return TypeSpec.interfaceBuilder(syntaxNode + "Visitor")
+    public TypeSpec.Builder typeSpec(JavaShapeDirective directive) {
+        return TypeSpec.interfaceBuilder(visitorClass(directive))
                        .addModifiers(Modifier.PUBLIC)
                        .addTypeVariable(TypeVariableName.get("T"));
+    }
+
+    private ClassName visitorClass(JavaShapeDirective directive) {
+        var syntaxNodeClass = directive.toClass(syntaxNode);
+        return ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
     }
 
     public TypeSpec generate(JavaShapeDirective state) {
@@ -124,23 +120,23 @@ public class GenerateVisitor {
         return builder.build();
     }
 
-    TypeSpec defaultVisitor(JavaShapeDirective state) {
+    TypeSpec defaultVisitor(JavaShapeDirective directive) {
         var builder = TypeSpec.classBuilder("Default")
                               .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.ABSTRACT)
-                              .addSuperinterface(ParameterizedTypeName.get(ClassName.bestGuess(syntaxNode + "Visitor"),
+                              .addSuperinterface(ParameterizedTypeName.get(visitorClass(directive),
                                                                            TypeVariableName.get("T")))
                               .addTypeVariable(TypeVariableName.get("T"));
 
         builder.addMethod(MethodSpec.methodBuilder("getDefault")
                                     .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
-                                    .addParameter(ClassName.bestGuess(syntaxNode), "node")
+                                    .addParameter(directive.toClass(syntaxNode), "node")
                                     .returns(TypeVariableName.get("T"))
                                     .build());
-        var shapeIds = shapesImplementing(syntaxNode, state.model());
-        for (var shape : state.model().getStructureShapes()) {
+        var shapeIds = shapesImplementing(syntaxNode, directive.model());
+        for (var shape : directive.model().getStructureShapes()) {
             if (shapeIds.contains(shape.getId())) {
                 if (!shape.hasTrait(InterfaceTrait.class)) {
-                    builder.addMethod(visitForStructure(state, shape)
+                    builder.addMethod(visitForStructure(directive, shape)
                                           .addAnnotation(Override.class)
                                           .addStatement("return getDefault(node)")
                                           .build());

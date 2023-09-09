@@ -1,5 +1,7 @@
 package mx.sugus.codegen;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import mx.sugus.codegen.integration.JavaCodegenIntegration;
 import mx.sugus.codegen.writer.CodegenWriter;
@@ -33,7 +35,7 @@ public final class JavaCodegenContext
         this.fileManifest = fileManifest;
         this.writerDelegator = new WriterDelegator<>(fileManifest, symbolProvider,
                                                      (filename, namespace) -> new CodegenWriter(namespace));
-        this.integrations = integrations;
+        this.integrations = List.copyOf(integrations);
     }
 
     public static JavaCodegenContext fromContextDirective(
