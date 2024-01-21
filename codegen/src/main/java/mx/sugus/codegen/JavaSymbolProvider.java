@@ -42,6 +42,14 @@ public interface JavaSymbolProvider extends SymbolProvider {
         return SymbolConstants.toUnmodifiableCollection(symbol);
     }
 
+    default String emptyReferenceBuilder(SymbolConstants.AggregateType type) {
+        return SymbolConstants.emptyReferenceBuilder(type);
+    }
+
+    default String initReferenceBuilder(SymbolConstants.AggregateType type) {
+        return SymbolConstants.initReferenceBuilder(type);
+    }
+
     default Name toMemberJavaName(MemberShape shape) {
         var name = toMemberName(shape);
         return Name.of(name);

@@ -1,10 +1,5 @@
 {
     "version": "2.0",
-    "maven": {
-        "dependencies": [
-            "software.amazon.smithy:smithy-aws-traits:1.33.0"
-        ]
-    },
     "plugins": {
         "smithy-java-codegen": {
             "service": "mx.sugus.syntax.java#JavaSyntax",
@@ -12,6 +7,11 @@
             "package": "mx.sugus.syntax.java",
             "packageVersion": "0.0.1",
             "plugins": {
+                "mx.sugus.codegen.plugin.data#SynthesizeServicePluginProvider": {
+                    "service": "mx.sugus.syntax.java#JavaSyntax"
+                },
+                "mx.sugus.codegen.plugin.data#FlattenInterfaceMembersPluginProvider": {
+                },
                 "mx.sugus.codegen.plugin.data#DataPluginProvider": {
                 },
                 "mx.sugus.codegen.plugin.syntax#SyntaxPluginProvider": {

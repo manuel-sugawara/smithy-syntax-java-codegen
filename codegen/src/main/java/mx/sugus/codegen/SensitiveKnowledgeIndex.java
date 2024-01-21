@@ -52,7 +52,7 @@ public class SensitiveKnowledgeIndex implements KnowledgeIndex {
         return sensitiveShapes.contains(toShapeId.toShapeId());
     }
 
-    static class ComputeSensitive implements ShapeVisitor<Boolean> {
+    static class ComputeSensitive extends ShapeVisitor.Default<Boolean> {
         private final Model model;
 
         ComputeSensitive(Model model) {
@@ -62,14 +62,10 @@ public class SensitiveKnowledgeIndex implements KnowledgeIndex {
         private static boolean hasSensitiveTrait(Shape shape) {
             return shape.hasTrait(SensitiveTrait.class);
         }
-        @Override
-        public Boolean blobShape(BlobShape shape) {
-            return hasSensitiveTrait(shape);
-        }
 
         @Override
-        public Boolean booleanShape(BooleanShape shape) {
-            return hasSensitiveTrait(shape);
+        protected Boolean getDefault(Shape shape) {
+            return shape.hasTrait(SensitiveTrait.class);
         }
 
         @Override
@@ -82,51 +78,6 @@ public class SensitiveKnowledgeIndex implements KnowledgeIndex {
             return hasSensitiveTrait(shape)
                    || shape.getKey().accept(this)
                    || shape.getValue().accept(this);
-        }
-
-        @Override
-        public Boolean byteShape(ByteShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean shortShape(ShortShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean integerShape(IntegerShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean longShape(LongShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean floatShape(FloatShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean documentShape(DocumentShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean doubleShape(DoubleShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean bigIntegerShape(BigIntegerShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
-        public Boolean bigDecimalShape(BigDecimalShape shape) {
-            return hasSensitiveTrait(shape);
         }
 
         @Override
@@ -145,11 +96,6 @@ public class SensitiveKnowledgeIndex implements KnowledgeIndex {
         }
 
         @Override
-        public Boolean stringShape(StringShape shape) {
-            return hasSensitiveTrait(shape);
-        }
-
-        @Override
         public Boolean structureShape(StructureShape shape) {
             // We stop at the member level.
             return false;
@@ -163,12 +109,7 @@ public class SensitiveKnowledgeIndex implements KnowledgeIndex {
 
         @Override
         public Boolean memberShape(MemberShape shape) {
-            return hasSensitiveTrait(shape) || model.expectShape(shape.getTarget()).accept(this);
-        }
-
-        @Override
-        public Boolean timestampShape(TimestampShape shape) {
-            return hasSensitiveTrait(shape);
+            return hasSensitiveTrait(shape) || model.getShape(shape.getTarget()).map(s -> s.accept(this)).orElse(false);
         }
     }
 }

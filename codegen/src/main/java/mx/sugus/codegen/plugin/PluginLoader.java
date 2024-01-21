@@ -21,9 +21,9 @@ public interface PluginLoader {
                                          .flatMap(Collection::stream)
                                          .collect(Collectors.toSet());
         while (true) {
-            System.out.printf("PREV loadPlugins:: -----------------------------\n current result: [%s]\n", result.resolved);
+            //System.out.printf("PREV loadPlugins:: -----------------------------\n current result: [%s]\n", result.resolved);
             result = loadPlugins(allRequired, pluginConfig).merge(result);
-            System.out.printf(" NEW loadPlugins:: -----------------------------\n current result: [%s]\n", result.resolved);
+            //System.out.printf(" NEW loadPlugins:: -----------------------------\n current result: [%s]\n", result.resolved);
             var newAllRequired = result.resolved.keySet()
                                                 .stream()
                                                 .map(result.resolved::get)

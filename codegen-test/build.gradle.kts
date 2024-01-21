@@ -37,3 +37,7 @@ dependencies {
     implementation("software.amazon.smithy:smithy-aws-traits:$smithyVersion")
     implementation("mx.sugus.syntax.java:smithy-java-syntax-traits:0.1")
 }
+
+java.sourceSets["main"].java {
+    srcDirs("model", "src/main/smithy")
+}

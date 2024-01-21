@@ -45,6 +45,26 @@ public class SymbolConstants {
             };
     }
 
+    public static String emptyReferenceBuilder(AggregateType type) {
+        return
+            switch (type) {
+                case MAP -> "forOrderedMap";
+                case LIST -> "forList";
+                case SET -> "forOrderedSet";
+                default -> null;
+            };
+    }
+
+    public static String initReferenceBuilder(AggregateType type) {
+        return
+            switch (type) {
+                case MAP -> "fromPersistentOrderedMap";
+                case LIST -> "fromPersistentList";
+                case SET -> "fromPersistentOrderedSet";
+                default -> null;
+            };
+    }
+
     public static String toUnmodifiableCollection(Symbol type) {
         return
             switch (aggregateType(type)) {

@@ -84,8 +84,6 @@ public final class IfStatementSpec implements SyntaxNode {
         private ElseStatementSpec elseStatement;
 
         private Deque<Builder> elseIfBuilders = new ArrayDeque<>();
-        private ElseStatementSpec.Builder elseStatementBuilder;
-
 
         ElseIfBuilder(SyntaxNode condition) {
             this.condition = condition;

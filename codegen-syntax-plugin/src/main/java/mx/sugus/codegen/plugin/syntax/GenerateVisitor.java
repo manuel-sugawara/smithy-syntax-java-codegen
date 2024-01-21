@@ -14,6 +14,7 @@ import mx.sugus.javapoet.TypeVariableName;
 import mx.sugus.syntax.java.InterfaceTrait;
 import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.shapes.StructureShape;

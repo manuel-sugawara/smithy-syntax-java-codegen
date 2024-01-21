@@ -1,17 +1,24 @@
 package mx.sugus.codegen.plugin;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
+import software.amazon.smithy.model.transform.ModelTransformer;
 
 @SuppressWarnings("unchecked")
 public class BaseModuleConfig {
+    private final List<TransformModelTask> earlyTransformers;
+    private final List<TransformModelTask> transformers;
     private final Map<ShapeType, Set<ShapeBaseTask<?>>> inits;
     private final Map<Identifier, Set<ShapeBaseTask<?>>> interceptors;
     private final Map<Class<?>, Set<ShapeBaseTask<?>>> serializers;
@@ -22,7 +29,6 @@ public class BaseModuleConfig {
             inits.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<ShapeBaseTask<?>>(kvp.getValue())));
         }
         this.inits = Collections.unmodifiableMap(inits);
-
         var interceptors = new LinkedHashMap<Identifier, Set<ShapeBaseTask<?>>>();
         for (var kvp : builder.interceptors.entrySet()) {
             interceptors.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<ShapeBaseTask<?>>(kvp.getValue())));
@@ -34,6 +40,9 @@ public class BaseModuleConfig {
             serializers.put(kvp.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(kvp.getValue())));
         }
         this.serializers = Collections.unmodifiableMap(serializers);
+        this.transformers = List.copyOf(builder.transformers);
+        this.earlyTransformers = List.copyOf(builder.earlyTransformers);
+
     }
 
     public static Builder builder() {
@@ -63,7 +72,17 @@ public class BaseModuleConfig {
                           .collect(Collectors.toSet());
     }
 
+    public List<TransformModelTask> transformers() {
+        return transformers;
+    }
+
+    public List<TransformModelTask> earlyTransformers() {
+        return earlyTransformers;
+    }
+
     public static class Builder {
+        private List<TransformModelTask> earlyTransformers = new ArrayList<>();
+        private List<TransformModelTask> transformers = new ArrayList<>();
         private Map<ShapeType, Set<ShapeBaseTask<?>>> inits = new LinkedHashMap<>();
         private Map<Identifier, Set<ShapeBaseTask<?>>> interceptors = new LinkedHashMap<>();
         private Map<Class<?>, Set<ShapeBaseTask<?>>> serializers = new LinkedHashMap<>();
@@ -95,6 +114,16 @@ public class BaseModuleConfig {
             return this;
         }
 
+        public Builder addTransformer(TransformModelTask transformer) {
+            this.transformers.add(transformer);
+            return this;
+        }
+
+        public Builder addEarlyTransformer(TransformModelTask transformer) {
+            this.earlyTransformers.add(transformer);
+            return this;
+        }
+
         public Builder merge(BaseModuleConfig other) {
             other.inits.forEach((k, v) -> {
                 inits.computeIfAbsent(k, t -> new LinkedHashSet<>())
@@ -110,6 +139,8 @@ public class BaseModuleConfig {
                 serializers.computeIfAbsent(k, t -> new LinkedHashSet<>())
                            .addAll(v);
             });
+            transformers.addAll(other.transformers);
+            earlyTransformers.addAll(other.earlyTransformers);
             return this;
         }
 

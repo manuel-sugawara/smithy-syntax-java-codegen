@@ -23,6 +23,7 @@ public class SyntaxPlugin implements SmithyGeneratorPlugin {
             .builder()
             .addInit(new GenerateVisitor(syntaxNode))
             .addInit(new GenerateRewriteVisitor(syntaxNode))
+            .addInit(new GenerateWalkVisitor(syntaxNode))
             .putInterceptor(StructureGeneratorData.ID,
                             new SyntaxInterceptor(syntaxNode));
     }

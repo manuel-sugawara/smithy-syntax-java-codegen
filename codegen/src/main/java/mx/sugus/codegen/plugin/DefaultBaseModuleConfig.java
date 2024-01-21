@@ -55,8 +55,10 @@ public final class DefaultBaseModuleConfig {
         }
         var config = newBaseConfig();
         var pluginsResolved = sortPlugins(pluginsEnabled, pluginsLoaded.resolved());
+
         for (var plugin : pluginsResolved) {
-            config = plugin.merge(config);
+            var pluginConfig = pluginsEnabled.get(plugin.name());
+            config = plugin.merge(pluginConfig, config);
         }
         return config;
     }
@@ -156,9 +158,7 @@ public final class DefaultBaseModuleConfig {
             if (plugin == null) {
                 throw new RuntimeException("Cannot find the plugin with id: " + pluginId);
             }
-            Set<Identifier> requires = plugin.requires()
-                                             .stream()
-                                             .collect(Collectors.toSet());
+            Set<Identifier> requires = new HashSet<>(plugin.requires());
             inverseGraph.computeIfAbsent(pluginId, (x) -> new HashSet<>())
                         .addAll(requires);
         }
@@ -172,7 +172,7 @@ public final class DefaultBaseModuleConfig {
                      .add(k);
             }
         });
-        System.out.printf("=======>> inverse graph: %s\n=======>>        graph: %s\n", graph, inverseGraph);
+        //System.out.printf("=======>> inverse graph: %s\n=======>>        graph: %s\n", graph, inverseGraph);
         return new Graph(graph, inverseGraph);
     }
 

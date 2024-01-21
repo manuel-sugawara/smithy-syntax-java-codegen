@@ -19,3 +19,7 @@ wrapper
 /poet/build
 /codegen-test/build
 /codegen-jv/build
+/codegen-data-plugin/build/
+/codegen-syntax-plugin/build/
+/syntax-java/build/
+/util/build/

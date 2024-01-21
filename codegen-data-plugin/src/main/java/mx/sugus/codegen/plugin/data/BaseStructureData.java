@@ -6,21 +6,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.lang.model.element.Modifier;
+import mx.sugus.codegen.NotNullOptionalityKnowledgeIndex;
+import mx.sugus.codegen.SensitiveKnowledgeIndex;
 import mx.sugus.codegen.SymbolConstants;
 import mx.sugus.codegen.plugin.JavaShapeDirective;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.FieldSpec;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterSpec;
+import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeName;
 import mx.sugus.javapoet.TypeSpec;
 import mx.sugus.syntax.java.ConstTrait;
 import mx.sugus.syntax.java.IsaTrait;
+import mx.sugus.util.CollectionBuilderReference;
 import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 
 public final class BaseStructureData implements DirectedStructure {
+
+    private final BaseStructureDataBuilderKind builderType = BaseStructureDataBuilderKind.USE_REFERENCE;
 
     @Override
     public ClassName className(JavaShapeDirective state) {
@@ -66,6 +72,7 @@ public final class BaseStructureData implements DirectedStructure {
         var builder = MethodSpec.constructorBuilder()
                                 .addModifiers(Modifier.PRIVATE)
                                 .addParameter(ParameterSpec.builder(builderClassName(), "builder").build());
+        var optionalityIndex = NotNullOptionalityKnowledgeIndex.of(state.model());
         for (var member : state.shape().members()) {
             if (member.hasTrait(ConstTrait.class)) {
                 continue;
@@ -74,14 +81,13 @@ public final class BaseStructureData implements DirectedStructure {
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             switch (aggregateType) {
-                case LIST, SET -> {
-                    builder.addStatement("this.$1L = $2T.$3L(builder.$1L)",
-                                         name,
-                                         Collections.class,
-                                         SymbolConstants.toUnmodifiableCollection(symbol));
-                }
+                case LIST, SET, MAP -> memberValueFromBuilder(state, member, builder);
                 default -> {
-                    builder.addStatement("this.$1L = builder.$1L", name);
+                    if (!optionalityIndex.isMemberNullable(member)) {
+                        builder.addStatement("this.$L = $T.requireNonNull(builder.$L, $S)", name, Objects.class, name, name);
+                    } else {
+                        builder.addStatement("this.$1L = builder.$1L", name);
+                    }
                 }
             }
         }
@@ -96,7 +102,21 @@ public final class BaseStructureData implements DirectedStructure {
         return List.of(accessor(state, member));
     }
 
-    public MethodSpec accessor(JavaShapeDirective state, MemberShape member) {
+    private void memberValueFromBuilder(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+        var symbolProvider = state.symbolProvider();
+        var name = symbolProvider.toMemberName(member);
+        var symbol = symbolProvider.toSymbol(member);
+        switch (builderType) {
+            case PLAIN_USE_ONCE -> builder.addStatement("this.$1L = $2T.$3L(builder.$1L)",
+                                                        name,
+                                                        Collections.class,
+                                                        SymbolConstants.toUnmodifiableCollection(symbol));
+            case USE_REFERENCE -> builder.addStatement("this.$1L = builder.$1L.asPersistent()", name);
+            default -> throw new IllegalArgumentException("builder type not supported: " + builderType);
+        }
+    }
+
+    private MethodSpec accessor(JavaShapeDirective state, MemberShape member) {
         var symbolProvider = state.symbolProvider();
         var name = symbolProvider.toMemberName(member);
         var type = symbolProvider.toTypeName(member);
@@ -107,7 +127,7 @@ public final class BaseStructureData implements DirectedStructure {
                          .build();
     }
 
-    public MethodSpec constAccessor(JavaShapeDirective state, MemberShape member) {
+    private MethodSpec constAccessor(JavaShapeDirective state, MemberShape member) {
         var symbolProvider = state.symbolProvider();
         var name = symbolProvider.toMemberName(member);
         var type = symbolProvider.toTypeName(member);
@@ -168,6 +188,7 @@ public final class BaseStructureData implements DirectedStructure {
 
         builder.addStatement("$1T other = ($1T) obj", className);
         builder.addCode("return ");
+        var optionalityIndex = NotNullOptionalityKnowledgeIndex.of(state.model());
         var isFirst = true;
         for (var member : state.shape().members()) {
             if (member.hasTrait(ConstTrait.class)) {
@@ -177,7 +198,11 @@ public final class BaseStructureData implements DirectedStructure {
             if (!isFirst) {
                 builder.addCode("\n$> && ");
             }
-            builder.addCode("$1T.equals(this.$2L, other.$2L)", Objects.class, name);
+            if (optionalityIndex.isMemberNullable(member)) {
+                builder.addCode("$1T.equals(this.$2L, other.$2L)", Objects.class, name);
+            } else {
+                builder.addCode("this.$1L.equals(other.$1L)", name);
+            }
             if (!isFirst) {
                 builder.addCode("$<");
             }
@@ -198,12 +223,17 @@ public final class BaseStructureData implements DirectedStructure {
                                 .returns(int.class);
 
         builder.addStatement("int hashCode = 17");
+        var optionalityIndex = NotNullOptionalityKnowledgeIndex.of(state.model());
         for (var member : state.shape().members()) {
             var name = symbolProvider.toMemberName(member);
             if (member.hasTrait(ConstTrait.class)) {
                 builder.addStatement("hashCode = 31 * hashCode + $T.hashCode(this.$L())", Objects.class, name);
+                continue;
+            }
+            if (optionalityIndex.isMemberNullable(member)) {
+                builder.addStatement("hashCode = 31 * hashCode + ($1L != null ? $1L.hashCode() : 0)", name);
             } else {
-                builder.addStatement("hashCode = 31 * hashCode + $T.hashCode(this.$L)", Objects.class, name);
+                builder.addStatement("hashCode = 31 * hashCode + $L.hashCode()", name);
             }
         }
         builder.addStatement("return hashCode");
@@ -217,6 +247,7 @@ public final class BaseStructureData implements DirectedStructure {
                                 .addModifiers(Modifier.PUBLIC)
                                 .returns(String.class);
         var isFirst = true;
+        var sensitiveIndex = SensitiveKnowledgeIndex.of(state.model());
         builder.addCode("return $S", state.shape().getId().getName() + "{");
         for (var member : state.shape().members()) {
             var literalName = member.getMemberName() + ": ";
@@ -225,9 +256,18 @@ public final class BaseStructureData implements DirectedStructure {
             if (!isFirst) {
                 literalName = ", " + literalName;
             }
-            builder.addCode("$S + String.valueOf($N())", literalName, name);
-            builder.addCode("$<");
-            isFirst = false;
+            if (sensitiveIndex.isSensitive(member)) {
+                literalName += "<*** REDACTED ***>";
+                builder.addCode("$S", literalName);
+            } else {
+                if (member.hasTrait(ConstTrait.class)) {
+                    builder.addCode("$S + $N()", literalName, name);
+                } else {
+                    builder.addCode("$S + $N", literalName, name);
+                }
+                builder.addCode("$<");
+                isFirst = false;
+            }
         }
         builder.addCode(" + $S;\n", "}");
         return builder.build();
@@ -267,20 +307,30 @@ public final class BaseStructureData implements DirectedStructure {
             return List.of(fieldFor(state, member));
         }
 
-        public FieldSpec fieldFor(JavaShapeDirective state, MemberShape member) {
+        private FieldSpec fieldFor(JavaShapeDirective state, MemberShape member) {
             var symbolProvider = state.symbolProvider();
             var name = symbolProvider.toMemberName(member);
-            var type = symbolProvider.toTypeName(member);
-            var filed = FieldSpec.builder(type, name)
-                                 .addModifiers(Modifier.PRIVATE);
+            var innerType = symbolProvider.toTypeName(member);
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
-            switch (aggregateType) {
-                case LIST, MAP, SET -> {
-                    filed.initializer("new $T<>()", symbolProvider.concreteClassFor2(symbol));
+            var finalType = switch (aggregateType) {
+                case LIST, SET, MAP -> finalTypeForAggregate(state, innerType, member);
+                default -> innerType;
+            };
+            var filed = FieldSpec.builder(finalType, name)
+                                 .addModifiers(Modifier.PRIVATE);
+            return filed.build();
+        }
+
+        private TypeName finalTypeForAggregate(JavaShapeDirective state, TypeName innerType, MemberShape member) {
+            switch (BaseStructureData.this.builderType) {
+                case USE_REFERENCE -> {
+                    return ParameterizedTypeName.get(ClassName.get(CollectionBuilderReference.class), innerType);
+                }
+                default -> {
+                    return innerType;
                 }
             }
-            return filed.build();
         }
 
         @Override
@@ -296,7 +346,34 @@ public final class BaseStructureData implements DirectedStructure {
         }
 
         public MethodSpec constructor(JavaShapeDirective state) {
-            return MethodSpec.constructorBuilder().build();
+            var symbolProvider = state.symbolProvider();
+            var builder = MethodSpec.constructorBuilder();
+            for (var member : state.shape().members()) {
+                var symbol = symbolProvider.toSymbol(member);
+                var aggregateType = SymbolConstants.aggregateType(symbol);
+                switch (aggregateType) {
+                    case LIST, MAP, SET -> setEmptyValue(state, member, builder);
+                }
+            }
+            return builder.build();
+        }
+
+        private void setEmptyValue(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+            var symbolProvider = state.symbolProvider();
+            var symbol = symbolProvider.toSymbol(member);
+            var name = symbolProvider.toMemberName(member);
+            switch (BaseStructureData.this.builderType) {
+                case USE_REFERENCE -> {
+                    var aggregateType = SymbolConstants.aggregateType(symbol);
+                    var emptyReferenceBuilder = symbolProvider.emptyReferenceBuilder(aggregateType);
+                    builder.addStatement("this.$L = $T.$L()", name, CollectionBuilderReference.class, emptyReferenceBuilder);
+                    ;
+                }
+                default -> {
+                    var concreteType = symbolProvider.concreteClassFor2(symbol);
+                    builder.addStatement("this.$L = new $T<>()", name, concreteType);
+                }
+            }
         }
 
         public MethodSpec constructorFromData(JavaShapeDirective state) {
@@ -311,15 +388,26 @@ public final class BaseStructureData implements DirectedStructure {
                 var symbol = symbolProvider.toSymbol(member);
                 var aggregateType = SymbolConstants.aggregateType(symbol);
                 switch (aggregateType) {
-                    case LIST, MAP, SET -> {
-                        builder.addStatement("this.$1L.addAll(data.$1L)", name);
-                    }
-                    default -> {
-                        builder.addStatement("this.$1L = data.$1L", name);
-                    }
+                    case LIST, MAP, SET -> setValueFromPersistent(state, member, builder);
+                    default -> builder.addStatement("this.$1L = data.$1L", name);
                 }
             }
             return builder.build();
+        }
+
+        private void setValueFromPersistent(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+            var symbolProvider = state.symbolProvider();
+            var symbol = symbolProvider.toSymbol(member);
+            var name = symbolProvider.toMemberName(member);
+            switch (BaseStructureData.this.builderType) {
+                case USE_REFERENCE -> {
+                    var aggregateType = SymbolConstants.aggregateType(symbol);
+                    var init = symbolProvider.initReferenceBuilder(aggregateType);
+                    builder.addStatement("this.$1L = $2T.$3L(data.$1L)", name, CollectionBuilderReference.class,
+                                         init);
+                }
+                default -> builder.addStatement("this.$1L.addAll(data.$1L)", name);
+            }
         }
 
         @Override
@@ -329,7 +417,7 @@ public final class BaseStructureData implements DirectedStructure {
             }
             var symbol = state.symbolProvider().toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
-            if (aggregateType == SymbolConstants.AggregateType.NONE) {
+            if (aggregateType == SymbolConstants.AggregateType.NONE || aggregateType == SymbolConstants.AggregateType.MAP) {
                 return List.of(setter(state, member));
             }
             return List.of(setter(state, member), adder(state, member));
@@ -341,21 +429,28 @@ public final class BaseStructureData implements DirectedStructure {
             var builder = MethodSpec.methodBuilder("add" + name.toSingularSpelling().asCamelCase())
                                     .addModifiers(Modifier.PUBLIC)
                                     .returns(className(state));
-
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             switch (aggregateType) {
-                case LIST, SET -> {
-                    var paramName = name.toSingularSpelling().toString();
-                    builder.addParameter(SymbolConstants.typeParam(symbol), paramName);
-                    builder.addStatement("this.$L.add($L)", name.toString(), paramName);
-                }
-                default -> {
-                    builder.addStatement("this.$1L = $1L", name);
-                }
+                case LIST, SET -> addValue(state, member, builder);
+                default -> throw new IllegalArgumentException("cannot create adder for " + member);
             }
             return builder.addStatement("return this")
                           .build();
+        }
+
+        private void addValue(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+            var symbolProvider = state.symbolProvider();
+            var name = symbolProvider.toMemberJavaName(member);
+            var symbol = symbolProvider.toSymbol(member);
+            var paramName = name.toSingularSpelling().toString();
+            builder.addParameter(SymbolConstants.typeParam(symbol), paramName);
+            switch (BaseStructureData.this.builderType) {
+                case USE_REFERENCE -> {
+                    builder.addStatement("this.$L.asTransient().add($L)", name.toString(), paramName);
+                }
+                default -> builder.addStatement("this.$L.add($L)", name.toString(), paramName);
+            }
         }
 
         public MethodSpec setter(JavaShapeDirective state, MemberShape member) {
@@ -370,9 +465,8 @@ public final class BaseStructureData implements DirectedStructure {
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             switch (aggregateType) {
-                case LIST, SET -> {
-                    builder.addStatement("this.$L.clear()", name);
-                    builder.addStatement("this.$1L.addAll($1L)", name);
+                case LIST, SET, MAP -> {
+                    setValue(state, member, builder);
                 }
                 default -> {
                     builder.addStatement("this.$1L = $1L", name);
@@ -380,6 +474,21 @@ public final class BaseStructureData implements DirectedStructure {
             }
             return builder.addStatement("return this")
                           .build();
+        }
+
+        private void setValue(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+            var symbolProvider = state.symbolProvider();
+            var name = symbolProvider.toMemberJavaName(member);
+            switch (BaseStructureData.this.builderType) {
+                case USE_REFERENCE -> {
+                    builder.addStatement("this.$L.clear()", name);
+                    builder.addStatement("this.$1L.asTransient().addAll($1L)", name);
+                }
+                default -> {
+                    builder.addStatement("this.$L.clear()", name);
+                    builder.addStatement("this.$1L.addAll($1L)", name);
+                }
+            }
         }
 
         @Override
@@ -393,19 +502,28 @@ public final class BaseStructureData implements DirectedStructure {
             var builder = MethodSpec.methodBuilder("build")
                                     .addModifiers(Modifier.PUBLIC)
                                     .returns(dataType);
-            builder.beginControlFlow("if (_built)")
-                   .addStatement("throw new IllegalStateException($S)", "The builder has been already used")
-                   .endControlFlow();
-            builder.addStatement("_built = true")
-                   .addStatement("$1T result = new $1T(this)", dataType);
-            for (var member : state.shape().members()) {
-                if (member.hasTrait(ConstTrait.class)) {
-                    continue;
+
+            switch (BaseStructureData.this.builderType) {
+                case PLAIN_USE_ONCE -> {
+                    builder.beginControlFlow("if (_built)")
+                           .addStatement("throw new IllegalStateException($S)", "The builder has been already used")
+                           .endControlFlow();
+                    builder.addStatement("_built = true")
+                           .addStatement("$1T result = new $1T(this)", dataType);
+                    for (var member : state.shape().members()) {
+                        if (member.hasTrait(ConstTrait.class)) {
+                            continue;
+                        }
+                        var name = symbolProvider.toMemberName(member);
+                        builder.addStatement("this.$L = null", name);
+                    }
+                    builder.addStatement("return result");
                 }
-                var name = symbolProvider.toMemberName(member);
-                builder.addStatement("this.$L = null", name);
+                default -> {
+                    builder.addStatement("return new $1T(this)", dataType);
+                }
             }
-            return builder.addStatement("return result").build();
+            return builder.build();
         }
     }
 }

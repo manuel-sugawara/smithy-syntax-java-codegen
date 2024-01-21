@@ -38,7 +38,7 @@ public class SimpleName {
         var lastIndex = parts.length - 1;
         var lastPart = parts[lastIndex];
         var lastChar = lastPart.charAt(lastPart.length() - 1);
-        if ((lastChar == 's' || lastChar == 'S') && !"s".equalsIgnoreCase(lastPart)) {
+        if ((lastChar == 's' || lastChar == 'S') && lastPart.length() > 1) {
             var newParts = parts.clone();
             newParts[parts.length - 1] = lastPart.substring(0, lastPart.length() - 1);
             return new SimpleName(casing, newParts);
@@ -50,7 +50,7 @@ public class SimpleName {
         var lastIndex = parts.length - 1;
         var lastPart = parts[lastIndex];
         var lastChar = lastPart.charAt(lastPart.length() - 1);
-        if (!((lastChar == 's' || lastChar == 'S') && !"s".equalsIgnoreCase(lastPart))) {
+        if (!((lastChar == 's' || lastChar == 'S') && lastPart.length() > 1)) {
             var newParts = parts.clone();
             newParts[parts.length - 1] = lastPart + "s";
             return new SimpleName(casing, newParts);

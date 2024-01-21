@@ -2,10 +2,13 @@ package mx.sugus.codegen.plugin.data;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Flow;
 import mx.sugus.codegen.plugin.BaseModuleConfig;
+import mx.sugus.codegen.plugin.DefaultTransformModelTask;
 import mx.sugus.codegen.plugin.Identifier;
 import mx.sugus.codegen.plugin.PluginProvider;
 import mx.sugus.codegen.plugin.SmithyGeneratorPlugin;
+import mx.sugus.codegen.transforms.FlattenInterfaceMembers;
 import software.amazon.smithy.model.node.ObjectNode;
 
 public class DataPluginProvider implements PluginProvider {

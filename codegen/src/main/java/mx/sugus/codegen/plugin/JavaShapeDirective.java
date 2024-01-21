@@ -4,6 +4,7 @@ import java.util.Objects;
 import mx.sugus.codegen.JavaCodegenContext;
 import mx.sugus.codegen.JavaCodegenSettings;
 import mx.sugus.codegen.JavaSymbolProvider;
+import mx.sugus.codegen.OptionalityKnowledgeIndex;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -91,6 +92,7 @@ public class JavaShapeDirective {
         private JavaSymbolProvider symbolProvider;
         private JavaCodegenContext context;
         private JavaCodegenSettings settings;
+        private OptionalityKnowledgeIndex optionalityKnowledgeIndex;
 
         public Builder model(Model model) {
             this.model = model;
@@ -119,6 +121,12 @@ public class JavaShapeDirective {
 
         public Builder settings(JavaCodegenSettings settings) {
             this.settings = settings;
+            return this;
+        }
+
+        // private OptionalityKnowledgeIndex optionalityKnowledgeIndex;
+        public Builder optionalityKnowledgeIndex(OptionalityKnowledgeIndex optionalityKnowledgeIndex) {
+            this.optionalityKnowledgeIndex = optionalityKnowledgeIndex;
             return this;
         }
 

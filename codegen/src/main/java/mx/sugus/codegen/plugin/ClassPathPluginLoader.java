@@ -24,8 +24,10 @@ public class ClassPathPluginLoader implements PluginLoader {
                 unresolved.remove(id);
             }
         }
+        /*
         System.out.printf("ClassPathPluginLoader: unresolved: %s\n"
                           + "ClassPathPluginLoader: resolved: %s\n", unresolved, plugins);
+         */
         return new LoadResult(unresolved, plugins);
     }
 

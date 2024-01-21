@@ -32,10 +32,10 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
         //runner.directedCodegen(new JavaDirectedCodegen());
         var baseModule = new BaseModule(DefaultBaseModuleConfig.buildDependants(pluginLoader(), settingsNode));
         runner.directedCodegen(new SmithyGenerator(baseModule));
+        runner.model(baseModule.earlyPreprocessModel(context.getModel()));
         runner.integrationFinder(() -> integrationFinder(baseModule));
         runner.integrationClass(JavaCodegenIntegration.class);
         runner.fileManifest(context.getFileManifest());
-        runner.model(context.getModel());
         runner.settings(settings);
         runner.service(settings.service());
         runner.performDefaultCodegenTransforms();
@@ -66,8 +66,7 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
 
         @Override
         public Model preprocessModel(Model model, JavaCodegenSettings settings) {
-            baseModule.preprocessModel(model, settings);
-            return model;
+            return baseModule.preprocessModel(model, settings);
         }
     }
 }

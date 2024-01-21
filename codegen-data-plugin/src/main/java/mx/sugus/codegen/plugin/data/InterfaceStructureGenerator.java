@@ -44,6 +44,16 @@ public class InterfaceStructureGenerator implements DirectedStructure {
 
     @Override
     public List<MethodSpec> methodsFor(JavaShapeDirective state, MemberShape member) {
-        return Collections.emptyList();
+        return List.of(accessor(state, member));
+    }
+
+    private MethodSpec accessor(JavaShapeDirective state, MemberShape member) {
+        var symbolProvider = state.symbolProvider();
+        var name = symbolProvider.toMemberName(member);
+        var type = symbolProvider.toTypeName(member);
+        return MethodSpec.methodBuilder(name)
+                         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                         .returns(type)
+                         .build();
     }
 }
