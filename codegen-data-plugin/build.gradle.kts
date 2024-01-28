@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":codegen"))
     implementation(project(":poet"))
     implementation(project(":util"))
+    implementation(project(":syntax-java"))
     implementation("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
     implementation("software.amazon.smithy:smithy-model:$smithyVersion")
     implementation("software.amazon.smithy:smithy-rules-engine:$smithyVersion")

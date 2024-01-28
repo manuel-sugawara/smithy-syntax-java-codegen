@@ -1,13 +1,15 @@
 package mx.sugus.codegen;
 
+import static mx.sugus.codegen.util.PoetUtils.SUBTYPE_OF_OBJECT;
+
 import mx.sugus.codegen.util.Name;
 import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.javapoet.ClassName;
-import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeName;
+import mx.sugus.syntax.java.InterfaceTrait;
+import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
-import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 
@@ -18,15 +20,14 @@ public interface JavaSymbolProvider extends SymbolProvider {
         return ClassName.get(s.getNamespace(), s.getName());
     }
 
+    default TypeName toSimpleTypeName(Shape shape) {
+        var symbol = toSymbol(shape);
+        return ClassName.get(symbol.getNamespace(), symbol.getName());
+    }
+
     default TypeName toTypeName(Shape shape) {
         var symbol = toSymbol(shape);
-        var baseClass = ClassName.get(symbol.getNamespace(), symbol.getName());
-        if (symbol.getReferences().isEmpty()) {
-            return baseClass;
-        }
-        TypeName[] params =
-            symbol.getReferences().stream().map(SymbolReference::getSymbol).map(PoetUtils::toTypeName).toArray(TypeName[]::new);
-        return ParameterizedTypeName.get(baseClass, params);
+        return PoetUtils.toTypeName(symbol);
     }
 
     default Symbol concreteClassFor(Symbol symbol) {

@@ -8,9 +8,12 @@ import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.FieldSpec;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.TypeSpec;
+import mx.sugus.syntax.java.TypeSyntax;
 import software.amazon.smithy.model.shapes.MemberShape;
 
 public interface DirectedStructure2 extends DirectiveToTypeSpec {
+
+    TypeSyntax foobar();
 
     ClassName className(JavaShapeDirective state);
 

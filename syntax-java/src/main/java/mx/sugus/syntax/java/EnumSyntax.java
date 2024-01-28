@@ -7,49 +7,56 @@ import javax.lang.model.element.Modifier;
 import mx.sugus.util.CollectionBuilderReference;
 
 public final class EnumSyntax implements TypeSyntax {
-    private final String name;
-
-    private final Set<Modifier> modifiers;
-
-    private final List<Annotation> annotations;
-
     private final List<EnumConstant> enumConstants;
-
-    private final List<FieldSyntax> fields;
 
     private final List<MethodSyntax> methods;
 
+    private final String name;
+
+    private final List<Annotation> annotations;
+
+    private final Set<Modifier> modifiers;
+
+    private final List<FieldSyntax> fields;
+
+    private final List<TypeSyntax> innerTypes;
+
     private EnumSyntax(Builder builder) {
-        this.name = Objects.requireNonNull(builder.name, "name");
-        this.modifiers = builder.modifiers.asPersistent();
-        this.annotations = builder.annotations.asPersistent();
         this.enumConstants = builder.enumConstants.asPersistent();
-        this.fields = builder.fields.asPersistent();
         this.methods = builder.methods.asPersistent();
-    }
-
-    public String name() {
-        return this.name;
-    }
-
-    public Set<Modifier> modifiers() {
-        return this.modifiers;
-    }
-
-    public List<Annotation> annotations() {
-        return this.annotations;
+        this.name = Objects.requireNonNull(builder.name, "name");
+        this.annotations = builder.annotations.asPersistent();
+        this.modifiers = builder.modifiers.asPersistent();
+        this.fields = builder.fields.asPersistent();
+        this.innerTypes = builder.innerTypes.asPersistent();
     }
 
     public List<EnumConstant> enumConstants() {
         return this.enumConstants;
     }
 
+    public List<MethodSyntax> methods() {
+        return this.methods;
+    }
+
+    public String name() {
+        return this.name;
+    }
+
+    public List<Annotation> annotations() {
+        return this.annotations;
+    }
+
+    public Set<Modifier> modifiers() {
+        return this.modifiers;
+    }
+
     public List<FieldSyntax> fields() {
         return this.fields;
     }
 
-    public List<MethodSyntax> methods() {
-        return this.methods;
+    public List<TypeSyntax> innerTypes() {
+        return this.innerTypes;
     }
 
     public Builder toBuilder() {
@@ -68,35 +75,38 @@ public final class EnumSyntax implements TypeSyntax {
             return false;
         }
         EnumSyntax other = (EnumSyntax) obj;
-        return this.name.equals(other.name)
-             && this.modifiers.equals(other.modifiers)
+        return this.enumConstants.equals(other.enumConstants)
+             && this.methods.equals(other.methods)
+             && this.name.equals(other.name)
              && this.annotations.equals(other.annotations)
-             && this.enumConstants.equals(other.enumConstants)
+             && this.modifiers.equals(other.modifiers)
              && this.fields.equals(other.fields)
-             && this.methods.equals(other.methods);
+             && this.innerTypes.equals(other.innerTypes);
     }
 
     @Override
     public int hashCode() {
         int hashCode = 17;
-        hashCode = 31 * hashCode + name.hashCode();
-        hashCode = 31 * hashCode + modifiers.hashCode();
-        hashCode = 31 * hashCode + annotations.hashCode();
         hashCode = 31 * hashCode + enumConstants.hashCode();
-        hashCode = 31 * hashCode + fields.hashCode();
         hashCode = 31 * hashCode + methods.hashCode();
+        hashCode = 31 * hashCode + name.hashCode();
+        hashCode = 31 * hashCode + annotations.hashCode();
+        hashCode = 31 * hashCode + modifiers.hashCode();
+        hashCode = 31 * hashCode + fields.hashCode();
+        hashCode = 31 * hashCode + innerTypes.hashCode();
         return hashCode;
     }
 
     @Override
     public String toString() {
         return "EnumSyntax{"
-             + "name: " + name
-             + ", modifiers: " + modifiers
+             + "enumConstants: " + enumConstants
+             + ", methods: " + methods
+             + ", name: " + name
              + ", annotations: " + annotations
-             + ", enumConstants: " + enumConstants
+             + ", modifiers: " + modifiers
              + ", fields: " + fields
-             + ", methods: " + methods + "}";
+             + ", innerTypes: " + innerTypes + "}";
     }
 
     public static Builder builder() {
@@ -109,50 +119,65 @@ public final class EnumSyntax implements TypeSyntax {
     }
 
     public static final class Builder {
-        private String name;
+        private CollectionBuilderReference<List<EnumConstant>> enumConstants;
 
-        private CollectionBuilderReference<Set<Modifier>> modifiers;
+        private CollectionBuilderReference<List<MethodSyntax>> methods;
+
+        private String name;
 
         private CollectionBuilderReference<List<Annotation>> annotations;
 
-        private CollectionBuilderReference<List<EnumConstant>> enumConstants;
+        private CollectionBuilderReference<Set<Modifier>> modifiers;
 
         private CollectionBuilderReference<List<FieldSyntax>> fields;
 
-        private CollectionBuilderReference<List<MethodSyntax>> methods;
+        private CollectionBuilderReference<List<TypeSyntax>> innerTypes;
 
         private boolean _built;
 
         Builder() {
-            this.modifiers = CollectionBuilderReference.forOrderedSet();
-            this.annotations = CollectionBuilderReference.forList();
             this.enumConstants = CollectionBuilderReference.forList();
-            this.fields = CollectionBuilderReference.forList();
             this.methods = CollectionBuilderReference.forList();
+            this.annotations = CollectionBuilderReference.forList();
+            this.modifiers = CollectionBuilderReference.forOrderedSet();
+            this.fields = CollectionBuilderReference.forList();
+            this.innerTypes = CollectionBuilderReference.forList();
         }
 
         Builder(EnumSyntax data) {
-            this.name = data.name;
-            this.modifiers = CollectionBuilderReference.fromPersistentOrderedSet(data.modifiers);
-            this.annotations = CollectionBuilderReference.fromPersistentList(data.annotations);
             this.enumConstants = CollectionBuilderReference.fromPersistentList(data.enumConstants);
-            this.fields = CollectionBuilderReference.fromPersistentList(data.fields);
             this.methods = CollectionBuilderReference.fromPersistentList(data.methods);
+            this.name = data.name;
+            this.annotations = CollectionBuilderReference.fromPersistentList(data.annotations);
+            this.modifiers = CollectionBuilderReference.fromPersistentOrderedSet(data.modifiers);
+            this.fields = CollectionBuilderReference.fromPersistentList(data.fields);
+            this.innerTypes = CollectionBuilderReference.fromPersistentList(data.innerTypes);
+        }
+
+        public Builder enumConstants(List<EnumConstant> enumConstants) {
+            this.enumConstants.clear();
+            this.enumConstants.asTransient().addAll(enumConstants);
+            return this;
+        }
+
+        public Builder addEnumConstant(EnumConstant enumConstant) {
+            this.enumConstants.asTransient().add(enumConstant);
+            return this;
+        }
+
+        public Builder methods(List<MethodSyntax> methods) {
+            this.methods.clear();
+            this.methods.asTransient().addAll(methods);
+            return this;
+        }
+
+        public Builder addMethod(MethodSyntax method) {
+            this.methods.asTransient().add(method);
+            return this;
         }
 
         public Builder name(String name) {
             this.name = name;
-            return this;
-        }
-
-        public Builder modifiers(Set<Modifier> modifiers) {
-            this.modifiers.clear();
-            this.modifiers.asTransient().addAll(modifiers);
-            return this;
-        }
-
-        public Builder addModifier(Modifier modifier) {
-            this.modifiers.asTransient().add(modifier);
             return this;
         }
 
@@ -167,14 +192,14 @@ public final class EnumSyntax implements TypeSyntax {
             return this;
         }
 
-        public Builder enumConstants(List<EnumConstant> enumConstants) {
-            this.enumConstants.clear();
-            this.enumConstants.asTransient().addAll(enumConstants);
+        public Builder modifiers(Set<Modifier> modifiers) {
+            this.modifiers.clear();
+            this.modifiers.asTransient().addAll(modifiers);
             return this;
         }
 
-        public Builder addEnumConstant(EnumConstant enumConstant) {
-            this.enumConstants.asTransient().add(enumConstant);
+        public Builder addModifier(Modifier modifier) {
+            this.modifiers.asTransient().add(modifier);
             return this;
         }
 
@@ -189,14 +214,14 @@ public final class EnumSyntax implements TypeSyntax {
             return this;
         }
 
-        public Builder methods(List<MethodSyntax> methods) {
-            this.methods.clear();
-            this.methods.asTransient().addAll(methods);
+        public Builder innerTypes(List<TypeSyntax> innerTypes) {
+            this.innerTypes.clear();
+            this.innerTypes.asTransient().addAll(innerTypes);
             return this;
         }
 
-        public Builder addMethod(MethodSyntax method) {
-            this.methods.asTransient().add(method);
+        public Builder addInnerType(TypeSyntax innerType) {
+            this.innerTypes.asTransient().add(innerType);
             return this;
         }
 

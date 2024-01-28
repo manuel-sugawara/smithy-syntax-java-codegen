@@ -206,6 +206,4 @@ public interface CollectionBuilderReference<T> extends BuilderReference<T, T> {
                                                        Collections::emptySet,
                                                        borrowed);
     }
-
-
 }

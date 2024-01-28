@@ -10,6 +10,7 @@ import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeSpec;
+import mx.sugus.javapoet.WildcardTypeName;
 import mx.sugus.syntax.java.InterfaceTrait;
 import mx.sugus.syntax.java.OptionalTrait;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -35,7 +36,7 @@ public class GenerateWalkVisitor extends AbstractShapeTask<TypeSpecResult> {
         var rewriteVisitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "WalkVisitor");
         var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
         return TypeSpec.classBuilder(rewriteVisitorClass)
-                       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                       .addModifiers(Modifier.PUBLIC)
                        .addSuperinterface(ParameterizedTypeName.get(visitorClass,
                                                                     directive.toClass(syntaxNode)));
     }
@@ -90,6 +91,11 @@ public class GenerateWalkVisitor extends AbstractShapeTask<TypeSpecResult> {
         var memberInnerTypeShape = memberInnerType(state, member);
         var memberInnerType = symbolProvider.toTypeName(memberInnerTypeShape);
         var memberType = symbolProvider.toTypeName(member);
+        if (false && memberInnerTypeShape.hasTrait(InterfaceTrait.class)) {
+            memberInnerType = ParameterizedTypeName.get((ClassName) memberInnerType,
+                                                        WildcardTypeName.subtypeOf(Object.class),
+                                                        WildcardTypeName.subtypeOf(Object.class));
+        }
         builder.addStatement("$T $L = node.$L()", memberType, memberName, memberName);
         builder.beginControlFlow("for (int idx = 0; idx < $L.size(); idx++)", memberName);
         builder.addStatement("$T value = $L.get(idx)", memberInnerType, memberName);
@@ -128,8 +134,14 @@ public class GenerateWalkVisitor extends AbstractShapeTask<TypeSpecResult> {
     void addSingleSyntaxNode(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
         var symbolProvider = state.symbolProvider();
         var memberName = symbolProvider.toMemberJavaName(member);
+        var memberType = symbolProvider.toTypeName(member);
+        if (false && state.model().getShape(member.getTarget()).map(s -> s.hasTrait(InterfaceTrait.class)).orElse(false)) {
+            memberType = ParameterizedTypeName.get((ClassName) memberType,
+                                                   WildcardTypeName.subtypeOf(Object.class),
+                                                   WildcardTypeName.subtypeOf(Object.class));
+        }
+
         if (member.hasTrait(OptionalTrait.class)) {
-            var memberType = symbolProvider.toTypeName(member);
             builder.addStatement("$1T $2L = node.$2L()", memberType, memberName);
             builder.beginControlFlow("if ($L != null)", memberName);
             builder.addStatement("$L.accept(this)", memberName);

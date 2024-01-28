@@ -31,15 +31,15 @@ public class SyntaxInterceptor extends AbstractShapeTask<TypeSpecResult> {
         if (shapeIds.contains(shape.getId()) && !shape.hasTrait(InterfaceTrait.class)) {
             var syntaxNodeClass = directive.toClass(syntaxNode());
             var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
-            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("T"));
+            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("VisitorR"));
             var name = directive.symbolProvider().toShapeJavaName(shape);
             var spec = result.spec().toBuilder()
                              .addMethod(
                                  MethodSpec.methodBuilder("accept")
                                            .addAnnotation(Override.class)
                                            .addModifiers(Modifier.PUBLIC)
-                                           .returns(TypeVariableName.get("T", Object.class))
-                                           .addTypeVariable(TypeVariableName.get("T"))
+                                           .returns(TypeVariableName.get("VisitorR", Object.class))
+                                           .addTypeVariable(TypeVariableName.get("VisitorR"))
                                            .addParameter(visitor, "visitor")
                                            .addStatement("return visitor.visit$L(this)", name)
                                            .build())
@@ -52,12 +52,12 @@ public class SyntaxInterceptor extends AbstractShapeTask<TypeSpecResult> {
         if (shape.hasTrait(InterfaceTrait.class) && shape.getId().toString().equals(syntaxNode)) {
             var syntaxNodeClass = directive.toClass(syntaxNode());
             var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
-            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("T"));
+            var visitor = ParameterizedTypeName.get(visitorClass, TypeVariableName.get("VisitorR"));
             var spec = result.spec().toBuilder()
                              .addMethod(MethodSpec.methodBuilder("accept")
                                                   .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                                                  .returns(TypeVariableName.get("T", Object.class))
-                                                  .addTypeVariable(TypeVariableName.get("T"))
+                                                  .returns(TypeVariableName.get("VisitorR", Object.class))
+                                                  .addTypeVariable(TypeVariableName.get("VisitorR"))
                                                   .addParameter(visitor, "visitor")
                                                   .build())
                              .build();

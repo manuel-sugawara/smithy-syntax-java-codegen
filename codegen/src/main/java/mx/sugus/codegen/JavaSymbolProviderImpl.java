@@ -1,5 +1,7 @@
 package mx.sugus.codegen;
 
+import static mx.sugus.codegen.util.PoetUtils.SUBTYPE_OF_OBJECT;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -11,6 +13,7 @@ import java.util.Set;
 import mx.sugus.codegen.util.Naming;
 import mx.sugus.codegen.util.PathUtil;
 import mx.sugus.javapoet.ClassName;
+import mx.sugus.syntax.java.InterfaceTrait;
 import mx.sugus.syntax.java.JavaTrait;
 import software.amazon.smithy.codegen.core.ReservedWords;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
@@ -255,6 +258,10 @@ public class JavaSymbolProviderImpl implements JavaSymbolProvider, ShapeVisitor<
         if (structureShape.hasTrait(ErrorTrait.class)) {
             builder.putProperty("extends", fromClass(RuntimeException.class));
         }
+        if (structureShape.hasTrait(InterfaceTrait.class)) {
+            builder.addReference(SUBTYPE_OF_OBJECT)
+                   .addReference(SUBTYPE_OF_OBJECT);
+        }
         return builder.build();
     }
 
@@ -308,8 +315,6 @@ public class JavaSymbolProviderImpl implements JavaSymbolProvider, ShapeVisitor<
 
 
     private String shapeClassPath(Shape shape) {
-        //return PathUtil.from(PathUtil.from(settings.packageParts()), "model", shapeName(shape) + ".java");
-        //TODO the package should be inside "model", how do we pass that down?
         return PathUtil.from(PathUtil.from(settings.packageParts()), shapeName(shape) + ".java");
     }
 }

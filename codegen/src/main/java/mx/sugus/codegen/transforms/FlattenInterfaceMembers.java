@@ -70,6 +70,7 @@ public class FlattenInterfaceMembers {
             if (!shapesInterfaceAnnotated.contains(parentShape)) {
                 continue;
             }
+
             kvp.getValue()
                .stream()
                .map(x -> mergeParentFields(parentShape, x))

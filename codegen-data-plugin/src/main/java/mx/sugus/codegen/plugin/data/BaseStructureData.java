@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.lang.model.element.Modifier;
+import mx.sugus.codegen.IsaKnowledgeIndex;
 import mx.sugus.codegen.NotNullOptionalityKnowledgeIndex;
 import mx.sugus.codegen.SensitiveKnowledgeIndex;
 import mx.sugus.codegen.SymbolConstants;
@@ -18,7 +19,6 @@ import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeName;
 import mx.sugus.javapoet.TypeSpec;
 import mx.sugus.syntax.java.ConstTrait;
-import mx.sugus.syntax.java.IsaTrait;
 import mx.sugus.util.CollectionBuilderReference;
 import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -38,9 +38,12 @@ public final class BaseStructureData implements DirectedStructure {
         var result = TypeSpec.classBuilder(state.symbol().getName())
                              .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
         var shape = state.shape();
-        if (shape.hasTrait(IsaTrait.class)) {
-            var parent = state.parentClass(shape);
-            result.addSuperinterface(parent);
+        var parent = IsaKnowledgeIndex.of(state.model()).parent(shape);
+        if (parent != null) {
+            var parentClass = state.symbolProvider().toClassName(parent);
+            var parentClassNew = ParameterizedTypeName.get(parentClass, className(state), className(state).nestedClass("Builder"
+            ));
+            result.addSuperinterface(parentClassNew);
         }
         return result;
     }
@@ -295,8 +298,19 @@ public final class BaseStructureData implements DirectedStructure {
 
         @Override
         public TypeSpec.Builder typeSpec(JavaShapeDirective state) {
-            return TypeSpec.classBuilder(builderClassName().simpleName())
-                           .addModifiers(Modifier.STATIC, Modifier.PUBLIC, Modifier.FINAL);
+            var result = TypeSpec.classBuilder(builderClassName().simpleName())
+                                 .addModifiers(Modifier.STATIC, Modifier.PUBLIC, Modifier.FINAL);
+            var shape = state.shape();
+            var parent = IsaKnowledgeIndex.of(state.model()).parent(shape);
+            if (parent != null) {
+                var parentClass = state.symbolProvider().toClassName(parent);
+                var container = BaseStructureData.this.className(state);
+                var parentClassNew = ParameterizedTypeName.get(parentClass.nestedClass("Builder"),
+                                                               container,
+                                                               container.nestedClass("Builder"));
+                result.addSuperinterface(parentClassNew);
+            }
+            return result;
         }
 
         @Override
@@ -367,7 +381,6 @@ public final class BaseStructureData implements DirectedStructure {
                     var aggregateType = SymbolConstants.aggregateType(symbol);
                     var emptyReferenceBuilder = symbolProvider.emptyReferenceBuilder(aggregateType);
                     builder.addStatement("this.$L = $T.$L()", name, CollectionBuilderReference.class, emptyReferenceBuilder);
-                    ;
                 }
                 default -> {
                     var concreteType = symbolProvider.concreteClassFor2(symbol);
@@ -412,9 +425,6 @@ public final class BaseStructureData implements DirectedStructure {
 
         @Override
         public List<MethodSpec> methodsFor(JavaShapeDirective state, MemberShape member) {
-            if (member.hasTrait(ConstTrait.class)) {
-                return Collections.emptyList();
-            }
             var symbol = state.symbolProvider().toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             if (aggregateType == SymbolConstants.AggregateType.NONE || aggregateType == SymbolConstants.AggregateType.MAP) {
@@ -429,6 +439,12 @@ public final class BaseStructureData implements DirectedStructure {
             var builder = MethodSpec.methodBuilder("add" + name.toSingularSpelling().asCamelCase())
                                     .addModifiers(Modifier.PUBLIC)
                                     .returns(className(state));
+            addValueParam(state, member, builder);
+            if (member.hasTrait(ConstTrait.class)) {
+                return builder.addStatement("throw new $T($S)", UnsupportedOperationException.class,
+                                            "Member " + name + " value is constant")
+                              .build();
+            }
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             switch (aggregateType) {
@@ -439,12 +455,18 @@ public final class BaseStructureData implements DirectedStructure {
                           .build();
         }
 
-        private void addValue(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+        private void addValueParam(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
             var symbolProvider = state.symbolProvider();
             var name = symbolProvider.toMemberJavaName(member);
             var symbol = symbolProvider.toSymbol(member);
             var paramName = name.toSingularSpelling().toString();
             builder.addParameter(SymbolConstants.typeParam(symbol), paramName);
+        }
+
+        private void addValue(JavaShapeDirective state, MemberShape member, MethodSpec.Builder builder) {
+            var symbolProvider = state.symbolProvider();
+            var name = symbolProvider.toMemberJavaName(member);
+            var paramName = name.toSingularSpelling().toString();
             switch (BaseStructureData.this.builderType) {
                 case USE_REFERENCE -> {
                     builder.addStatement("this.$L.asTransient().add($L)", name.toString(), paramName);
@@ -462,6 +484,11 @@ public final class BaseStructureData implements DirectedStructure {
                                     .addParameter(type, name)
                                     .returns(className(state));
 
+            if (member.hasTrait(ConstTrait.class)) {
+                return builder.addStatement("throw new $T($S)", UnsupportedOperationException.class,
+                                            "Member " + name + " value is constant")
+                              .build();
+            }
             var symbol = symbolProvider.toSymbol(member);
             var aggregateType = SymbolConstants.aggregateType(symbol);
             switch (aggregateType) {

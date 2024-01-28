@@ -7,14 +7,26 @@ import mx.sugus.javapoet.JavaFile;
 import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeName;
 import mx.sugus.javapoet.TypeSpec;
+import mx.sugus.javapoet.WildcardTypeName;
+import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 
 public class PoetUtils {
 
-    // TODO move toTypeName to SymbolProvider
+    public static Symbol SUBTYPE_OF_OBJECT = Symbol
+        .builder()
+        .name(WildcardTypeName.class.getSimpleName())
+        .namespace(WildcardTypeName.class.getPackageName(), ".")
+        .putProperty(TypeName.class.getName(), WildcardTypeName.subtypeOf(Object.class))
+        .build();
+
     public static TypeName toTypeName(Symbol s) {
         var baseClass = ClassName.get(s.getNamespace(), s.getName());
+        var typeName = s.getProperty(TypeName.class.getName(), TypeName.class).orElse(null);
+        if (typeName != null) {
+            return typeName;
+        }
         if (s.getReferences().isEmpty()) {
             return baseClass;
         }

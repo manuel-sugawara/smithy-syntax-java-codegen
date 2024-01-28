@@ -11,12 +11,15 @@ import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.MethodSpec;
 import mx.sugus.javapoet.ParameterizedTypeName;
 import mx.sugus.javapoet.TypeSpec;
+import mx.sugus.javapoet.WildcardTypeName;
 import mx.sugus.syntax.java.InterfaceTrait;
+import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.Trait;
 
 public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
     private final String syntaxNode;
@@ -35,7 +38,7 @@ public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
         var rewriteVisitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "RewriteVisitor");
         var visitorClass = ClassName.get(syntaxNodeClass.packageName(), syntaxNodeClass.simpleName() + "Visitor");
         return TypeSpec.classBuilder(rewriteVisitorClass)
-                       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                       .addModifiers(Modifier.PUBLIC)
                        .addSuperinterface(ParameterizedTypeName.get(visitorClass,
                                                                     directive.toClass(syntaxNode)));
     }
@@ -96,6 +99,11 @@ public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
         var memberCamelName = memberName.asCamelCase();
         var memberInnerTypeShape = memberInnerType(state, member);
         var memberInnerType = symbolProvider.toTypeName(memberInnerTypeShape);
+        if (false && memberInnerTypeShape.hasTrait(InterfaceTrait.class)) {
+            memberInnerType = ParameterizedTypeName.get((ClassName) memberInnerType,
+                                                   WildcardTypeName.subtypeOf(Object.class),
+                                                   WildcardTypeName.subtypeOf(Object.class));
+        }
         builder.addStatement("$T $L = node.$L()", memberType, memberName, memberName);
         builder.addStatement("$T new$L = null", memberType, memberCamelName);
         builder.beginControlFlow("for (int idx = 0; idx < $L.size(); idx++)", memberName);
@@ -155,6 +163,11 @@ public class GenerateRewriteVisitor extends AbstractShapeTask<TypeSpecResult> {
         var memberName = symbolProvider.toMemberJavaName(member);
         var memberType = symbolProvider.toTypeName(member);
         var memberCamelName = memberName.asCamelCase();
+        if (false && state.model().getShape(member.getTarget()).map(s -> s.hasTrait(InterfaceTrait.class)).orElse(false)) {
+            memberType = ParameterizedTypeName.get((ClassName) memberType,
+                                                   WildcardTypeName.subtypeOf(Object.class),
+                                                   WildcardTypeName.subtypeOf(Object.class));
+        }
         builder.addStatement("$T old$L = node.$L()", memberType, memberCamelName, memberName);
         builder.addStatement("$T new$L = ($T) old$L.accept(this)", memberType, memberCamelName, memberType,
                              memberCamelName);

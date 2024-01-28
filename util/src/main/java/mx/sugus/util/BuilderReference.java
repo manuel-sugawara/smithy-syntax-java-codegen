@@ -6,5 +6,5 @@ public interface BuilderReference<P, T> {
 
     T asTransient();
 
-    void clear();
+    BuilderReference<P, T> clear();
 }

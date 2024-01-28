@@ -28,6 +28,7 @@ public class DefaultBuilderReference<P, T> implements BuilderReference<P, T> {
         this.transientToPersistent = transientToPersistent;
         this.persistentToTransient = persistentToTransient;
         this.clearTransient = clearTransient;
+        // need to know if whatever is empty to be able to use this
         this.emptyPersistent = emptyPersistent;
         this.asPersistent = asPersistent;
     }
@@ -58,9 +59,10 @@ public class DefaultBuilderReference<P, T> implements BuilderReference<P, T> {
     }
 
     @Override
-    public void clear() {
+    public BuilderReference<P, T> clear() {
         if (asTransient != null) {
             asTransient = clearTransient.apply(asTransient);
         }
+        return this;
     }
 }
