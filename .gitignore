@@ -1,23 +1,25 @@
-/.idea/
-*.swp
-*.swo
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
 *.iml
+*.iws
+
+# VSCode
+bin/
+
+# Mac
 .DS_Store
-/eclipse-bin
-*~
-/.project
-/.classpath
-/.settings
+
+# Smithy
+.smithy.lsp.log
+
+# Ignore Gradle project-specific cache directory
 .gradle
-wrapper
-/build
-/buildSrc/build/
-/codegen/build
-/poet/build
-/codegen-test/build
-/codegen-jv/build
-/codegen-data-plugin/build/
-/codegen-syntax-plugin/build/
-/syntax-java/build/
-/util/build/
+
+# Ignore Gradle build output directory
+build
 /*/build/
