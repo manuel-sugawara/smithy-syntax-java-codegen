@@ -60,7 +60,7 @@ import javax.lang.model.type.TypeMirror;
  *   <li>{@code $]} ends a statement.
  * </ul>
  */
-public final class CodeBlock {
+public final class CodeBlock implements SyntaxNode {
     private static final Pattern NAMED_ARGUMENT =
         Pattern.compile("\\$(?<argumentName>[\\w_]+):(?<typeChar>[\\w]).*");
     private static final Pattern LOWERCASE = Pattern.compile("[a-z]+[\\w_]*");
@@ -158,6 +158,16 @@ public final class CodeBlock {
         builder.formatParts.addAll(formatParts);
         builder.args.addAll(args);
         return builder;
+    }
+
+    @Override
+    public void emit(CodeWriter writer) {
+        writer.emit(this);
+    }
+
+    @Override
+    public void emitInline(CodeWriter writer) {
+        SyntaxNode.super.emitInline(writer);
     }
 
     public static final class Builder {

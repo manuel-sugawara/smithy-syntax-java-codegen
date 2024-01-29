@@ -8,9 +8,6 @@
 /.project
 /.classpath
 /.settings
-/gradle/
-gradlew
-gradlew.bat
 .gradle
 wrapper
 /build
@@ -23,3 +20,4 @@ wrapper
 /codegen-syntax-plugin/build/
 /syntax-java/build/
 /util/build/
+/*/build/

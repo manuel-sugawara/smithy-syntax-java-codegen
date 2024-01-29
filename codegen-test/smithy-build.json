@@ -16,6 +16,8 @@
                 },
                 "mx.sugus.codegen.plugin.syntax#SyntaxPluginProvider": {
                     "syntaxNode": "mx.sugus.syntax.java#SyntaxNode"
+                },
+                "mx.sugus.codegen.plugin.nodeserde#NodeSerdePluginProvider": {
                 }
             }
         }

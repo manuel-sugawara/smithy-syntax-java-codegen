@@ -32,6 +32,7 @@ dependencies {
     implementation(project(":codegen"))
     implementation(project(":codegen-data-plugin"))
     implementation(project(":codegen-syntax-plugin"))
+    implementation(project(":codegen-node-serde-plugin"))
     implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
     implementation("software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion")
     implementation("software.amazon.smithy:smithy-aws-traits:$smithyVersion")
