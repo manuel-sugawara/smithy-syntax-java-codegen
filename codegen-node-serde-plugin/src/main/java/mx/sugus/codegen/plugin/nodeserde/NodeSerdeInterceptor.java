@@ -1,11 +1,6 @@
 package mx.sugus.codegen.plugin.nodeserde;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import javax.lang.model.element.Modifier;
+import mx.sugus.codegen.IsaKnowledgeIndex;
 import mx.sugus.codegen.SymbolConstants;
 import mx.sugus.codegen.plugin.AbstractShapeTask;
 import mx.sugus.codegen.plugin.JavaShapeDirective;
@@ -30,11 +25,19 @@ import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
+
+import javax.lang.model.element.Modifier;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
 
@@ -48,41 +51,57 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
     public TypeSpecResult transform(JavaShapeDirective directive, TypeSpecResult result) {
         var method = toNodeMethod(directive);
         if (directive.shape().hasTrait(InterfaceTrait.class)) {
-            var spec = result.spec().toBuilder()
-                             .addMethod(method.toBuilder().addModifiers(Modifier.ABSTRACT).build())
-                             .build();
+            var spec = result.spec()
+                    .toBuilder()
+                    .addMethod(method.toBuilder().addModifiers(Modifier.ABSTRACT).build());
+            var isaIndex = IsaKnowledgeIndex.of(directive.model());
+            var shape = directive.shape().asStructureShape().orElseThrow();
+            var dispatchMember = isaIndex.polymorphicDispatchMember(shape);
+            if (dispatchMember != null) {
+                spec.addMethod(fromNodeMethodPolymorphic(directive));
+            }
             return result.toBuilder()
-                         .spec(spec)
-                         .build();
+                    .spec(spec.build())
+                    .build();
         } else {
-            var spec = result.spec().toBuilder()
-                             .addMethod(method)
-                             .addMethod(fromNodeMethod(directive))
-                             .build();
+            var spec = result.spec()
+                    .toBuilder()
+                    .addMethod(method)
+                    .addMethod(fromNodeMethod(directive))
+                    .build();
             return result.toBuilder()
-                         .spec(spec)
-                         .build();
+                    .spec(spec)
+                    .build();
         }
     }
 
     private MethodSpec toNodeMethod(JavaShapeDirective directive) {
         var builder = MethodSpec.methodBuilder("toNode")
-                                .addModifiers(Modifier.PUBLIC)
-                                .returns(Node.class);
-        builder.addStatement("return null");
+                .addModifiers(Modifier.PUBLIC)
+                .returns(Node.class);
+        //Node.objectNodeBuilder()
+        builder.addStatement("$T.Builder builder = $T.objectNodeBuilder()", ObjectNode.class, Node.class);
+        for (var member : directive.shape().members()) {
+            if (member.hasTrait(ConstTrait.class)) {
+                continue;
+            }
+            var codeBlockBuilder = CodeBlock.builder();
+            var renderer = new NodeWriterCodegenVisitor(directive, codeBlockBuilder);
+            member.accept(renderer);
+            builder.addStatement(codeBlockBuilder.build());
+        }
+
+        builder.addStatement("return builder.build()");
         return builder.build();
     }
 
-    private void toNodeMethodAddEmitMember(JavaShapeDirective directive, MemberShape member, MethodSpec.Builder builder) {
-
-    }
 
     private MethodSpec fromNodeMethod(JavaShapeDirective directive) {
         var className = PoetUtils.toClassName(directive.symbol());
         var builder = MethodSpec.methodBuilder("fromNode")
-                                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                                .addParameter(Node.class, "node")
-                                .returns(className);
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(Node.class, "node")
+                .returns(className);
         builder.addStatement("$T.Builder builder = builder()", className);
         builder.addStatement("$T objectNode = node.expectObjectNode()", ObjectNode.class);
         for (var member : directive.shape().members()) {
@@ -96,6 +115,45 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
         }
 
         builder.addStatement("return builder.build()");
+
+        return builder.build();
+    }
+
+    private MethodSpec fromNodeMethodPolymorphic(JavaShapeDirective directive) {
+        var className = PoetUtils.toClassName(directive.symbol());
+        var builder = MethodSpec.methodBuilder("fromNode")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(Node.class, "node")
+                .returns(className);
+        var isaIndex = IsaKnowledgeIndex.of(directive.model());
+        var shape = directive.shape().asStructureShape().orElseThrow();
+        var dispatchMember = isaIndex.polymorphicDispatchMember(shape);
+        var table = isaIndex.polymorphicDispatchTable(directive.shape().asStructureShape().orElseThrow());
+        var symbolProvider = directive.symbolProvider();
+
+        var memberName = symbolProvider.toMemberName(dispatchMember);
+        var dispatchSymbol = symbolProvider.toSymbol(dispatchMember);
+        var dispatchClassName = PoetUtils.toClassName(dispatchSymbol);
+
+        builder.addStatement("$T objectNode = node.expectObjectNode()", ObjectNode.class);
+        builder.addStatement("$1T $2L = $1T.fromValue(objectNode.expectStringMember($2S).getValue())", dispatchClassName, memberName);
+
+        builder.beginControlFlow("switch ($L)", memberName);
+
+        table.forEach((k, v) -> {
+            var member = k;
+            var refId = member.getTrait(ConstTrait.class).map(ConstTrait::getValue).orElse("");
+            var shapeId = ShapeId.from(refId);
+            var constMember = directive.model().expectShape(shapeId, MemberShape.class);
+            var containingSymbol = directive.model().expectShape(constMember.getContainer(), EnumShape.class);
+            builder.addCode("case $L:\n", symbolProvider.toMemberName(constMember));
+
+            builder.addStatement("return $T.fromNode(node)", symbolProvider.toClassName(v));
+        });
+
+        builder.addCode("default:\n");
+        builder.addStatement("throw new IllegalArgumentException()");
+        builder.endControlFlow();
 
         return builder.build();
     }
@@ -148,7 +206,7 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
 
         @Override
         public Void booleanShape(BooleanShape shape) {
-            builder.add("$L.expectBooleanNode()", source());
+            builder.add("$L.expectBooleanNode().getValue()", source());
             return null;
         }
 
@@ -157,39 +215,40 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
             var name = directive.symbolProvider().toMemberJavaName(member);
             builder.add("$L.getArrayMember($S, arrayNodes -> {", source(), name);
             builder.add("\n$>");
-            builder.add("for (Node node : arrayNodes) {");
+            builder.add("for (Node item : arrayNodes) {");
             builder.add("\n$>");
             builder.add("builder.add$L(", name.toSingularSpelling().asCamelCase());
             var target = directive.model().expectShape(shape.getMember().getTarget());
-            pushSource("node");
+            pushSource("item");
             target.accept(this);
             popSource();
             builder.add(");");
             builder.add("$<\n");
             builder.add("}");
-            builder.add("$<");
+            builder.add("$<\n");
             builder.add("})");
             return null;
         }
 
         @Override
         public Void mapShape(MapShape shape) {
+
             var name = directive.symbolProvider().toMemberJavaName(member);
             builder.add("$L.getObjectMember($S, mapNode -> {", source(), name);
             builder.add("\n$>");
             builder.add("for ($T<$T, $T> member : mapNode.getMembers().entrySet()) {",
-                        Map.Entry.class, StringNode.class, Node.class);
+                    Map.Entry.class, StringNode.class, Node.class);
             builder.add("\n$>");
-            builder.add("$T node = member.getValue();\n", Node.class);
-            builder.add("builder.put$L(getKey().getValue(), ", name.toSingularSpelling().asCamelCase());
+            builder.add("$T tmp = member.getValue();\n", Node.class);
+            builder.add("builder.put$L(member.getKey().getValue(), ", name.toSingularSpelling().asCamelCase());
             var target = directive.model().expectShape(shape.getValue().getTarget());
-            pushSource("node");
+            pushSource("tmp");
             target.accept(this);
             popSource();
             builder.add(");");
             builder.add("$<\n");
             builder.add("}");
-            builder.add("$<");
+            builder.add("$<\n");
             builder.add("})");
             return null;
         }
@@ -202,6 +261,10 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
 
         private ObjectNode getObjectNode() {
             return null;
+        }
+
+        private void useIt() {
+            //return getObjectNode().expectStringMember();
         }
 
         private Optional<ObjectNode> getOptionalObjectNode() {
@@ -217,8 +280,6 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
 
         @Override
         public Void shortShape(ShortShape shape) {
-            // getOptionalObjectNode().map(x -> x.g)
-            // getObjectNode().getMember("foo").map(x -> x.expectNumberNode().getValue()).ifPresent();
             builder.add("$L.expectNumberNode().getValue().shortValue()", source());
             return null;
         }
@@ -262,6 +323,7 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
             return null;
         }
 
+
         @Override
         public Void memberShape(MemberShape shape) {
             this.member = shape;
@@ -280,8 +342,6 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
                 var name = directive.symbolProvider().toMemberName(shape);
                 builder.add(").ifPresent(value -> builder.$L(value))", name);
                 popSource();
-            } else {
-                builder.addStatement("");
             }
             builder.addStatement("");
             return null;
@@ -292,4 +352,5 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
             return null;
         }
     }
+
 }

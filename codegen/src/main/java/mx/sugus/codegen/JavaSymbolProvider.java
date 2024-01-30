@@ -1,19 +1,19 @@
 package mx.sugus.codegen;
 
-import static mx.sugus.codegen.util.PoetUtils.SUBTYPE_OF_OBJECT;
-
 import mx.sugus.codegen.util.Name;
 import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.TypeName;
-import mx.sugus.syntax.java.InterfaceTrait;
-import mx.sugus.syntax.java.IsaTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 
 public interface JavaSymbolProvider extends SymbolProvider {
+
+    default boolean isMemberNullable(MemberShape shape) {
+        return true;
+    }
 
     default ClassName toClassName(Shape shape) {
         Symbol s = toSymbol(shape);
