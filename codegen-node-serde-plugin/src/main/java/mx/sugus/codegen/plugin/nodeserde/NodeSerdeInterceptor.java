@@ -79,12 +79,8 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
         var builder = MethodSpec.methodBuilder("toNode")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(Node.class);
-        //Node.objectNodeBuilder()
         builder.addStatement("$T.Builder builder = $T.objectNodeBuilder()", ObjectNode.class, Node.class);
         for (var member : directive.shape().members()) {
-            if (member.hasTrait(ConstTrait.class)) {
-                continue;
-            }
             var codeBlockBuilder = CodeBlock.builder();
             var renderer = new NodeWriterCodegenVisitor(directive, codeBlockBuilder);
             member.accept(renderer);
@@ -257,18 +253,6 @@ public class NodeSerdeInterceptor extends AbstractShapeTask<TypeSpecResult> {
         public Void byteShape(ByteShape shape) {
             builder.add("$L.expectNumberNode().getValue().byteValue()", source());
             return null;
-        }
-
-        private ObjectNode getObjectNode() {
-            return null;
-        }
-
-        private void useIt() {
-            //return getObjectNode().expectStringMember();
-        }
-
-        private Optional<ObjectNode> getOptionalObjectNode() {
-            return Optional.ofNullable(getObjectNode());
         }
 
         @Override

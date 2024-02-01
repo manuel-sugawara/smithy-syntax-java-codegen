@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+
+import mx.sugus.codegen.util.Name;
 import mx.sugus.codegen.util.Naming;
 import mx.sugus.codegen.util.PathUtil;
 import mx.sugus.javapoet.ClassName;
@@ -70,12 +73,14 @@ public class JavaSymbolProviderImpl implements JavaSymbolProvider, ShapeVisitor<
         this.settings = settings;
         this.model = model;
         this.service = model.expectShape(settings.service(), ServiceShape.class);
-        var serviceName = settings.serviceName();
+        var serviceName = settings.shortName();
+
+        Function<String, String> handler = keyword -> Name.of(serviceName + " " + keyword).pascalCase();
         this.escaper = new ReservedWordsBuilder()
             .loadWords(Objects.requireNonNull(JavaSymbolProviderImpl.class.getResource("java-reserved-words.txt")),
-                       keyword -> StringUtils.uncapitalize(serviceName) + keyword)
+                       handler)
             .loadWords(Objects.requireNonNull(JavaSymbolProviderImpl.class.getResource("java-system-type-names.txt")),
-                       keyword -> serviceName + keyword)
+                    handler)
             .build();
     }
 

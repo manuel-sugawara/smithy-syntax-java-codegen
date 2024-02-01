@@ -18,6 +18,7 @@ import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
@@ -28,6 +29,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
     private final JavaShapeDirective directive;
@@ -88,7 +90,7 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
     private Void codegenUsingFromNodeValue(String convertToNative) {
         var name = directive.symbolProvider().toMemberJavaName(member);
         if (directive.symbolProvider().isMemberNullable(member)) {
-            builder.add("$1L != null ? $2T.from($1L$3L) : $2T.nullNode()", source(),  Node.class, convertToNative);
+            builder.add("$1L != null ? $2T.from($1L$3L) : null", source(),  Node.class, convertToNative);
         } else {
             builder.add("$T.from($L)", Node.class, source());
         }
@@ -146,6 +148,7 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         var symbol = directive.symbolProvider().toSymbol(member);
         var name = directive.symbolProvider().toMemberJavaName(member);
         var builderName = name + "NodeBuilder";
+        builder.beginControlFlow("if (!$L.isEmpty())", source());
         builder.addStatement("$1T.Builder $2L = $1T.builder()", ArrayNode.class, builderName);
         var itemName = newName("item");
         builder.beginControlFlow("for ($T $L : $L)", SymbolConstants.typeParam(symbol), itemName, source());
@@ -158,6 +161,8 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         builder.addStatement("");
         builder.endControlFlow();
         builder.addStatement("builder.withMember($S, $L.build())", member.getMemberName(), builderName);
+        builder.endControlFlow();
+
         return null;
     }
 
@@ -165,6 +170,7 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
     public Void mapShape(MapShape shape) {
         var name = directive.symbolProvider().toMemberJavaName(member);
         var builderName = name + "NodeBuilder";
+        builder.beginControlFlow("if (!$L.isEmpty())", source());
         builder.addStatement("$1T.Builder $2L = $1T.builder()", ObjectNode.class, builderName);
         var itemName = newName("item");
         var valueShapeId = directive.symbolProvider().toTypeName(shape.getValue());
@@ -180,6 +186,7 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         builder.addStatement("");
         builder.endControlFlow();
         builder.addStatement("builder.withMember($S, $L.build())", member.getMemberName(), builderName);
+        builder.endControlFlow();
         return null;
     }
 
@@ -188,8 +195,7 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         var symbolProvider = directive.symbolProvider();
         var shapeSymbol = symbolProvider.toSymbol(shape);
         PoetUtils.toClassName(shapeSymbol);
-
-        builder.add("$1L != null ? $1L.toNode() : $2T.nullNode()", source(), Node.class);
+        builder.add("$1L != null ? $1L.toNode() : null", source());
         return null;
     }
 
@@ -203,7 +209,12 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         var aggregateType = SymbolConstants.aggregateType(symbol);
         if (aggregateType == SymbolConstants.AggregateType.NONE) {
             var name = directive.symbolProvider().toMemberName(shape);
-            builder.add("builder.withMember($S, ", name);
+            if (directive.symbolProvider().isMemberNullable(shape)) {
+                builder.add("builder.withOptionalMember($S, ", name);
+                builder.add("$T.ofNullable(", Optional.class);
+            } else {
+                builder.add("builder.withMember($S, ", name);
+            }
         }
         String source = source();
         String javaName = directive.symbolProvider().toMemberName(shape);
@@ -211,6 +222,9 @@ class NodeWriterCodegenVisitor extends ShapeVisitor.Default<Void> {
         target.accept(this);
         popSource();
         if (aggregateType == SymbolConstants.AggregateType.NONE) {
+            if (directive.symbolProvider().isMemberNullable(shape)) {
+                builder.add(")");
+            }
             builder.addStatement(")");
         }
         return null;

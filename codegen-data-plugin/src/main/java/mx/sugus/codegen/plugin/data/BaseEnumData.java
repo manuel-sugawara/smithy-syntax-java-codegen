@@ -38,7 +38,10 @@ public final class BaseEnumData implements DirectedStructure {
         var shape = state.shape().asEnumShape().orElseThrow(() -> new IllegalArgumentException("expected enum"));
         shape.getEnumValues().forEach((name, value) -> {
             var enumConstant = Naming.screamCase(name);
-            result.put(enumConstant, TypeSpec.anonymousClassBuilder("$S", name).build());
+            if (value == null) {
+                value = name;
+            }
+            result.put(enumConstant, TypeSpec.anonymousClassBuilder("$S", value).build());
         });
         result.put("UNKNOWN_TO_VERSION", TypeSpec.anonymousClassBuilder("$L", "null").build());
         return result;
