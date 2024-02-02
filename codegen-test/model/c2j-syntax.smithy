@@ -1,1 +1,1 @@
-/Users/masm/Sources/smithy-syntax-java/model/c2j-syntax.smithy
+/Users/sugmanue/Sources/external/smithy-syntax-java/model/c2j-syntax.smithy

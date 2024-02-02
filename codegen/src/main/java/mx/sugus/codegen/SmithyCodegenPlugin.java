@@ -29,7 +29,6 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
     public void execute(PluginContext context) {
         var settingsNode = context.getSettings();
         JavaCodegenSettings settings = JavaCodegenSettings.from(settingsNode);
-        //runner.directedCodegen(new JavaDirectedCodegen());
         var baseModule = new BaseModule(DefaultBaseModuleConfig.buildDependants(pluginLoader(), settingsNode));
         runner.directedCodegen(new SmithyGenerator(baseModule));
         runner.model(baseModule.earlyPreprocessModel(context.getModel()));
@@ -38,9 +37,11 @@ public class SmithyCodegenPlugin implements SmithyBuildPlugin {
         runner.fileManifest(context.getFileManifest());
         runner.settings(settings);
         runner.service(settings.service());
+
         runner.performDefaultCodegenTransforms();
         runner.changeStringEnumsToEnumShapes(true);
         runner.createDedicatedInputsAndOutputs("Request", "Response");
+
         runner.run();
     }
 

@@ -3,7 +3,7 @@
     "plugins": {
         "smithy-java-codegen": {
             "service": "mx.sugus.syntax.java#JavaSyntax",
-            "shortName": "JavaSyntax",
+            "shortName": "C2j",
             "package": "mx.sugus.syntax.java",
             "packageVersion": "0.0.1",
             "plugins": {

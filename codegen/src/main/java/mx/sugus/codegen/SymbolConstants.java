@@ -1,5 +1,6 @@
 package mx.sugus.codegen;
 
+import mx.sugus.codegen.util.PoetUtils;
 import mx.sugus.javapoet.ClassName;
 import mx.sugus.javapoet.TypeName;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -115,9 +116,13 @@ public class SymbolConstants {
 
     public static TypeName typeParam(Symbol symbol) {
         var ref = symbol.getReferences().get(0).getSymbol();
-        return ClassName.bestGuess(ref.getFullName());
+        return PoetUtils.toClassName(ref);
     }
 
+    public static TypeName typeParam2(Symbol symbol) {
+        var ref = symbol.getReferences().get(1).getSymbol();
+        return PoetUtils.toClassName(ref);
+    }
 
     public enum AggregateType {
         NONE, LIST, MAP, SET
